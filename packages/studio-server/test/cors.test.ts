@@ -60,7 +60,7 @@ describe('buildCorsHeaders', () => {
       allowed: ['https://lintscope.dev'],
     });
     expect(h['Access-Control-Allow-Origin']).toBe('https://lintscope.dev');
-    expect(h['Vary']).toBe('Origin');
+    expect(h.Vary).toBe('Origin');
     expect(h['Access-Control-Allow-Methods']).toContain('GET');
     expect(h['Access-Control-Allow-Methods']).toContain('POST');
     expect(h['Access-Control-Allow-Methods']).toContain('OPTIONS');
@@ -72,7 +72,7 @@ describe('buildCorsHeaders', () => {
     const h = buildCorsHeaders({ origin: 'https://evil.dev', allowed: ['https://lintscope.dev'] });
     expect(h['Access-Control-Allow-Origin']).toBeUndefined();
     // Vary is still set so caches don't poison
-    expect(h['Vary']).toBe('Origin');
+    expect(h.Vary).toBe('Origin');
   });
 
   it('omits Access-Control-Allow-Origin when origin is undefined', () => {
