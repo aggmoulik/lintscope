@@ -1,0 +1,38 @@
+{
+  "name": "lintscope-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A shadcn-style component registry and CLI for viewing lint output in a real UI.",
+  "license": "MIT",
+  "author": "aggmoulik <qwertymoulik@gmail.com>",
+  "homepage": "https://github.com/aggmoulik/lintscope",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aggmoulik/lintscope.git"
+  },
+  "bugs": "https://github.com/aggmoulik/lintscope/issues",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev --filter=@lintscope/registry --ui=stream",
+    "test": "turbo test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "turbo typecheck",
+    "ui:add": "pnpm --filter @lintscope/ui shadcn add"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "turbo": "2.9.14",
+    "tsx": "4.22.3",
+    "typescript": "6.0.3"
+  }
+}

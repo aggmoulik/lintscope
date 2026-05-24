@@ -1,0 +1,60 @@
+{
+  "name": "@lintscope/ui",
+  "version": "0.0.0",
+  "description": "Source-of-truth React components for lintscope. Published to the shadcn registry at lintscope.dev.",
+  "license": "MIT",
+  "author": "aggmoulik <qwertymoulik@gmail.com>",
+  "homepage": "https://lintscope.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aggmoulik/lintscope.git",
+    "directory": "packages/ui"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lintscope/schema": "workspace:*",
+    "@tanstack/react-virtual": "3.13.25",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@lintscope/tsconfig": "workspace:*",
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "happy-dom": "20.9.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.7"
+  }
+}

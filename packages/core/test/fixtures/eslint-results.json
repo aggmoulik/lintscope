@@ -1,0 +1,70 @@
+[
+  {
+    "filePath": "/repo/src/unused.ts",
+    "messages": [
+      {
+        "ruleId": "no-unused-vars",
+        "severity": 1,
+        "message": "'foo' is defined but never used.",
+        "line": 3,
+        "column": 7,
+        "endLine": 3,
+        "endColumn": 10
+      },
+      {
+        "ruleId": "no-console",
+        "severity": 2,
+        "message": "Unexpected console statement.",
+        "line": 5,
+        "column": 1,
+        "endLine": 5,
+        "endColumn": 12,
+        "fix": { "range": [40, 60], "text": "" }
+      }
+    ],
+    "errorCount": 1,
+    "warningCount": 1,
+    "fixableErrorCount": 1,
+    "fixableWarningCount": 0
+  },
+  {
+    "filePath": "/repo/src/parse-error.ts",
+    "messages": [
+      {
+        "ruleId": null,
+        "severity": 2,
+        "message": "Parsing error: Unexpected token",
+        "line": 1,
+        "column": 1
+      }
+    ],
+    "errorCount": 1,
+    "warningCount": 0,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  },
+  {
+    "filePath": "/repo/src/with-suggestions.ts",
+    "messages": [
+      {
+        "ruleId": "prefer-const",
+        "severity": 1,
+        "message": "'count' is never reassigned. Use 'const' instead.",
+        "line": 7,
+        "column": 5,
+        "endLine": 7,
+        "endColumn": 8,
+        "suggestions": [
+          {
+            "desc": "Replace 'let' with 'const'",
+            "fix": { "range": [80, 83], "text": "const" }
+          }
+        ]
+      }
+    ],
+    "errorCount": 0,
+    "warningCount": 1,
+    "fixableErrorCount": 0,
+    "fixableWarningCount": 0
+  }
+]

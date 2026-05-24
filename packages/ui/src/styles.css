@@ -1,0 +1,19 @@
+/*
+ * Optional CSS layer for lintscope components. Consumers can import this
+ * to opt into a small set of CSS custom properties used as Tailwind tokens.
+ * If your project already has shadcn-style tokens defined, you can skip this.
+ */
+@layer base {
+  :root {
+    --lintscope-error: 0 84% 60%;
+    --lintscope-warning: 38 92% 50%;
+    --lintscope-info: 217 91% 60%;
+    --lintscope-muted-foreground: 215 16% 47%;
+  }
+  .dark {
+    --lintscope-error: 0 73% 56%;
+    --lintscope-warning: 32 96% 56%;
+    --lintscope-info: 213 94% 68%;
+    --lintscope-muted-foreground: 215 20% 65%;
+  }
+}

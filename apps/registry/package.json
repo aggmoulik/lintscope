@@ -1,0 +1,32 @@
+{
+  "name": "@lintscope/registry",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Public registry site at lintscope.dev. Hosts /r/[name].json + MDX docs + live previews.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "build:registry": "tsx scripts/build-registry.ts"
+  },
+  "dependencies": {
+    "@lintscope/schema": "workspace:*",
+    "@lintscope/ui": "workspace:*",
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@lintscope/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "4.3.0",
+    "@types/node": "25.9.1",
+    "@types/react": "19.2.15",
+    "@types/react-dom": "19.2.3",
+    "tailwindcss": "4.3.0",
+    "tsx": "4.22.3",
+    "typescript": "6.0.3"
+  }
+}

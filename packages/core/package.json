@@ -1,0 +1,57 @@
+{
+  "name": "@lintscope/core",
+  "version": "0.0.0",
+  "description": "Linter adapters and normalization. Currently supports ESLint; Biome and OXC follow.",
+  "license": "MIT",
+  "author": "aggmoulik <qwertymoulik@gmail.com>",
+  "homepage": "https://github.com/aggmoulik/lintscope",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aggmoulik/lintscope.git",
+    "directory": "packages/core"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters/eslint": {
+      "types": "./dist/adapters/eslint.d.ts",
+      "import": "./dist/adapters/eslint.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lintscope/schema": "workspace:*"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@lintscope/tsconfig": "workspace:*",
+    "@types/node": "25.9.1",
+    "eslint": "10.4.0",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.7"
+  }
+}

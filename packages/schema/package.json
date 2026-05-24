@@ -1,0 +1,43 @@
+{
+  "name": "@lintscope/schema",
+  "version": "0.0.0",
+  "description": "Zod-validated Diagnostic and LintReport types. The source of truth for lintscope.",
+  "license": "MIT",
+  "author": "aggmoulik <qwertymoulik@gmail.com>",
+  "homepage": "https://github.com/aggmoulik/lintscope",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aggmoulik/lintscope.git",
+    "directory": "packages/schema"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@lintscope/tsconfig": "workspace:*",
+    "tsup": "8.5.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.7"
+  }
+}

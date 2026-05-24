@@ -1,0 +1,7 @@
+{
+  "name": "lintscope-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sample project with intentional lint errors. Used by `pnpm demo` to populate the dashboard.",
+  "type": "module"
+}
