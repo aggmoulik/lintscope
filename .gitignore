@@ -17,6 +17,9 @@ dist
 # turbo
 .turbo
 
+# typescript incremental build info
+*.tsbuildinfo
+
 # vite
 .vite
 
