@@ -1,5 +1,13 @@
 export { DiagnosticCard, type DiagnosticCardProps } from './components/diagnostic-card';
 export { DiagnosticList, type DiagnosticListProps } from './components/diagnostic-list';
+export {
+  type BuiltDiff,
+  buildDiff,
+  DiffPreview,
+  type DiffPreviewProps,
+  type DiffRow,
+  type DiffRowKind,
+} from './components/diff-preview';
 export { FileTree, type FileTreeProps } from './components/file-tree';
 export { LintDashboard, type LintDashboardProps } from './components/lint-dashboard';
 export {
