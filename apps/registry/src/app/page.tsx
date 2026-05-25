@@ -106,7 +106,7 @@ export default function HomePage() {
 
       <section className="flex flex-col gap-4">
         <h2 className="text-2xl font-semibold tracking-tight">Live preview</h2>
-        <LintDashboard report={sampleReport} height={320} />
+        <LintDashboard report={sampleReport} />
       </section>
 
       <section className="flex flex-col gap-6">

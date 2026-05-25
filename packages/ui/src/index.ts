@@ -28,4 +28,10 @@ export {
   summarizeByRule,
 } from './components/rule-summary';
 export { SeverityBadge, type SeverityBadgeProps } from './components/severity-badge';
+export {
+  applyFilters,
+  type DashboardFilters,
+  EMPTY_FILTERS,
+  hasActiveFilters,
+} from './lib/filters';
 export { cn } from './lib/utils';
