@@ -23,6 +23,9 @@ importers:
 
   apps/registry:
     dependencies:
+      '@lintscope/api-schema':
+        specifier: workspace:*
+        version: link:../../packages/api-schema
       '@lintscope/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -38,7 +41,13 @@ importers:
       react-dom:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
+      '@lintscope/studio-server':
+        specifier: workspace:*
+        version: link:../../packages/studio-server
       '@lintscope/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
