@@ -6,6 +6,7 @@ import { handleFileRequest } from '../handlers/file';
 import { buildInitPayload } from '../handlers/init';
 import { buildReportPayload } from '../handlers/report';
 import { handleScanRequest } from '../handlers/scan';
+import { startWatcher, type Watcher } from '../watch';
 
 export interface StudioOptions {
   cwd: string;
@@ -17,21 +18,30 @@ export interface StudioOptions {
   port?: number;
   /** If false, don't open a browser. */
   open?: boolean;
+  /** Enable file-watcher → SSE push. Default false. */
+  watch?: boolean;
 }
 
 const DEFAULT_HOSTED_UI = 'https://lintscope.dev/studio';
 
+export interface StudioHandle {
+  studio: StudioServerInstance;
+  /** Set when --watch was passed. close() shuts the watcher down too. */
+  watcher: Watcher | undefined;
+}
+
 /**
  * The main user-facing command. Lints the project, spins up the studio HTTP
- * server, opens the browser, returns the instance so callers can shut down.
+ * server, opens the browser, optionally attaches a file watcher.
  *
- * Callers usually want to wait on a SIGINT handler before resolving the close
- * promise — see the bin entry for the standard pattern.
+ * Returns both the studio server and (when watching) the watcher so the
+ * caller can shut everything down via the SIGINT handler in bin/.
  */
-export async function runStudio(options: StudioOptions): Promise<StudioServerInstance> {
+export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
   const cwd = path.resolve(options.cwd);
   const hostedUi = options.hostedUi ?? DEFAULT_HOSTED_UI;
   const allowOrigin = options.allowOrigin ?? new URL(hostedUi).origin;
+  const watchEnabled = options.watch === true;
 
   const initialReport = await runEslint({ cwd });
 
@@ -50,15 +60,29 @@ export async function runStudio(options: StudioOptions): Promise<StudioServerIns
     open: options.open ?? true,
     ...(options.port !== undefined ? { port: options.port } : {}),
     endpoints: {
-      'GET /init': () => ({ body: buildInitPayload(context) }),
+      'GET /init': () => ({
+        body: buildInitPayload(context, {
+          scan: true,
+          watch: watchEnabled,
+          file: true,
+        }),
+      }),
       'GET /report': () => ({ body: buildReportPayload(context) }),
       'GET /file': async ({ query }) => {
         const result = await handleFileRequest(context, query);
         return { status: result.status, body: result.body };
       },
       'POST /scan': async () => ({ body: await handleScanRequest(context) }),
+      'GET /events': ({ sse }) => {
+        sse();
+        return undefined;
+      },
     },
   });
 
-  return studio;
+  const watcher = watchEnabled
+    ? startWatcher(context, { broadcast: studio.broadcast.bind(studio) })
+    : undefined;
+
+  return { studio, watcher };
 }

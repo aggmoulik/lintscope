@@ -39,17 +39,24 @@ function makeContext(report: LintReport, projectRoot = '/repo'): LintContext {
 }
 
 describe('buildInitPayload', () => {
+  const caps = { scan: true, watch: false, file: true };
+
   it('returns a schema-valid InitResponse', () => {
-    const payload = buildInitPayload(makeContext(makeReport()));
+    const payload = buildInitPayload(makeContext(makeReport()), caps);
     expect(payload.apiVersion).toBe('1');
     expect(payload.schemaVersion).toBe(SCHEMA_VERSION);
     expect(payload.name).toBe('lintscope');
     expect(payload.linters).toEqual([{ name: 'eslint', version: '9.15.0' }]);
   });
 
-  it('advertises scan + file capabilities; watch is off until Phase 2e', () => {
-    const payload = buildInitPayload(makeContext(makeReport()));
-    expect(payload.capabilities).toEqual({ scan: true, watch: false, file: true });
+  it('passes capabilities through from the caller', () => {
+    expect(buildInitPayload(makeContext(makeReport()), caps).capabilities).toEqual(caps);
+    const watchOn = buildInitPayload(makeContext(makeReport()), {
+      scan: true,
+      watch: true,
+      file: true,
+    });
+    expect(watchOn.capabilities.watch).toBe(true);
   });
 });
 

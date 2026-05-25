@@ -40,6 +40,7 @@
     "@lintscope/core": "workspace:*",
     "@lintscope/schema": "workspace:*",
     "@lintscope/studio-server": "workspace:*",
+    "chokidar": "4.0.3",
     "commander": "13.0.0"
   },
   "peerDependencies": {

@@ -1,4 +1,9 @@
-import { API_VERSION, type InitResponse, InitResponseSchema } from '@lintscope/api-schema';
+import {
+  API_VERSION,
+  type Capabilities,
+  type InitResponse,
+  InitResponseSchema,
+} from '@lintscope/api-schema';
 import { SCHEMA_VERSION } from '@lintscope/schema';
 import type { LintContext } from '../context';
 
@@ -6,22 +11,16 @@ import type { LintContext } from '../context';
  * Build the payload returned by `GET /init`. Validated against the schema at
  * the boundary so the CLI fails loudly during dev if we drift from
  * @lintscope/api-schema.
+ *
+ * `capabilities` is supplied by the caller (the `studio` command) — it knows
+ * whether watch mode is wired up for this session.
  */
-export function buildInitPayload(context: LintContext): InitResponse {
-  const payload = {
+export function buildInitPayload(context: LintContext, capabilities: Capabilities): InitResponse {
+  return InitResponseSchema.parse({
     apiVersion: API_VERSION,
     schemaVersion: SCHEMA_VERSION,
     name: context.name,
     linters: context.report.linters,
-    capabilities: {
-      // v1: re-scan on demand is always available; file content + watch are
-      // wired up below once we ship those endpoints.
-      scan: true,
-      // Watch endpoint is registered in Phase 2e. Until then advertise false
-      // so the studio page doesn't open an EventSource against a 404.
-      watch: false,
-      file: true,
-    },
-  };
-  return InitResponseSchema.parse(payload);
+    capabilities,
+  });
 }

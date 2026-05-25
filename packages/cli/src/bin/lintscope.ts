@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { runInit } from '../commands/init';
 import { runScan } from '../commands/scan';
-import { runStudio } from '../commands/studio';
+import { runStudio, type StudioHandle, type StudioOptions } from '../commands/studio';
 
 const program = new Command();
 
@@ -20,6 +20,40 @@ program
     if (result.configHint) console.log(`  ${result.configHint}`);
   });
 
+interface StudioCliOptions {
+  hostedUi?: string;
+  allowOrigin?: string;
+  port?: number;
+  open?: boolean;
+  watch?: boolean;
+}
+
+async function launchStudio(opts: StudioCliOptions): Promise<void> {
+  const studioOptions: StudioOptions = {
+    cwd: process.cwd(),
+    ...(opts.hostedUi ? { hostedUi: opts.hostedUi } : {}),
+    ...(opts.allowOrigin ? { allowOrigin: opts.allowOrigin } : {}),
+    ...(typeof opts.port === 'number' ? { port: opts.port } : {}),
+    ...(opts.open === false ? { open: false } : {}),
+    ...(opts.watch === true ? { watch: true } : {}),
+  };
+  const handle: StudioHandle = await runStudio(studioOptions);
+  const watching = handle.watcher !== undefined;
+
+  console.log(`✓ lintscope studio is running${watching ? ' (watch mode)' : ''}`);
+  console.log(`  local: http://localhost:${handle.studio.port}`);
+  console.log(`  open : ${handle.studio.url}`);
+
+  const shutdown = async () => {
+    console.log('\n→ shutting down…');
+    if (handle.watcher) await handle.watcher.close();
+    await handle.studio.close();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
 program
   .command('studio', { isDefault: true })
   .description('Run the linter and open the studio in your browser')
@@ -29,28 +63,21 @@ program
     Number.parseInt(v, 10),
   )
   .option('--no-open', 'do not open a browser')
-  .action(
-    async (opts: { hostedUi?: string; allowOrigin?: string; port?: number; open?: boolean }) => {
-      const studio = await runStudio({
-        cwd: process.cwd(),
-        ...(opts.hostedUi ? { hostedUi: opts.hostedUi } : {}),
-        ...(opts.allowOrigin ? { allowOrigin: opts.allowOrigin } : {}),
-        ...(typeof opts.port === 'number' ? { port: opts.port } : {}),
-        ...(opts.open === false ? { open: false } : {}),
-      });
-      console.log(`✓ lintscope studio is running`);
-      console.log(`  local: http://localhost:${studio.port}`);
-      console.log(`  open : ${studio.url}`);
+  .option('--watch', 'watch files and push updates over SSE')
+  .action(launchStudio);
 
-      const shutdown = async () => {
-        console.log('\n→ shutting down…');
-        await studio.close();
-        process.exit(0);
-      };
-      process.on('SIGINT', shutdown);
-      process.on('SIGTERM', shutdown);
-    },
-  );
+program
+  .command('watch')
+  .description('Alias for `studio --watch` — re-lint on file change')
+  .option('--hosted-ui <url>', 'override the hosted studio UI URL')
+  .option('--allow-origin <url>', 'override the CORS allowlist')
+  .option('--port <number>', 'use a specific port instead of a random free one', (v) =>
+    Number.parseInt(v, 10),
+  )
+  .option('--no-open', 'do not open a browser')
+  .action(async (opts: Omit<StudioCliOptions, 'watch'>) => {
+    await launchStudio({ ...opts, watch: true });
+  });
 
 program
   .command('scan')

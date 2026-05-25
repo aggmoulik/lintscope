@@ -13,6 +13,7 @@ export default defineConfig({
     '@lintscope/core',
     '@lintscope/schema',
     '@lintscope/studio-server',
+    'chokidar',
     'commander',
   ],
   banner: { js: '#!/usr/bin/env node' },
