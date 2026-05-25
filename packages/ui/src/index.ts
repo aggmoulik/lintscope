@@ -7,5 +7,10 @@ export {
   type LinterBadgeProps,
   type LinterBadgeTone,
 } from './components/linter-badge';
+export {
+  RuleSummary,
+  type RuleSummaryProps,
+  summarizeByRule,
+} from './components/rule-summary';
 export { SeverityBadge, type SeverityBadgeProps } from './components/severity-badge';
 export { cn } from './lib/utils';
