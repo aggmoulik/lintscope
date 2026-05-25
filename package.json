@@ -22,7 +22,9 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "turbo typecheck",
-    "ui:add": "pnpm --filter @lintscope/ui shadcn add"
+    "ui:add": "pnpm --filter @lintscope/ui shadcn add",
+    "changeset": "changeset",
+    "release": "turbo build --filter='./packages/*' && changeset publish"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -31,6 +33,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
+    "@changesets/changelog-github": "0.5.0",
+    "@changesets/cli": "2.27.10",
     "turbo": "2.9.14",
     "tsx": "4.22.3",
     "typescript": "6.0.3"
