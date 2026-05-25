@@ -59,16 +59,37 @@ export function detectBiomeConfig(cwd: string): DetectedBiomeConfig | null {
   return null;
 }
 
+const OXC_CONFIG_NAMES = ['.oxlintrc.json', 'oxlintrc.json'];
+
+export interface DetectedOxcConfig {
+  path: string;
+}
+
+/**
+ * Find an oxlint config (`.oxlintrc.json` preferred, `oxlintrc.json` accepted).
+ */
+export function detectOxcConfig(cwd: string): DetectedOxcConfig | null {
+  for (const name of OXC_CONFIG_NAMES) {
+    const p = path.join(cwd, name);
+    if (existsSync(p)) return { path: p };
+  }
+  return null;
+}
+
 export type DetectedLinter =
+  | { linter: 'oxc'; config: DetectedOxcConfig }
   | { linter: 'biome'; config: DetectedBiomeConfig }
   | { linter: 'eslint'; config: DetectedEslintConfig };
 
 /**
- * Pick the linter for a project based on which config files exist. Biome wins
- * over ESLint when both are present (a project that has both is most likely
- * migrating to Biome and wants Biome's output).
+ * Pick the linter for a project based on which config files exist.
+ * Precedence: oxc > biome > eslint. The reasoning is migration intent — a
+ * project that has switched to the faster, newer tool wants its output.
+ * Explicit `--linter` flags will override this default (tracked for v1.x).
  */
 export function detectLinter(cwd: string): DetectedLinter | null {
+  const oxc = detectOxcConfig(cwd);
+  if (oxc) return { linter: 'oxc', config: oxc };
   const biome = detectBiomeConfig(cwd);
   if (biome) return { linter: 'biome', config: biome };
   const eslint = detectEslintConfig(cwd);

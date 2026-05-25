@@ -1,0 +1,58 @@
+{
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "no-debugger",
+      "scope": "eslint",
+      "message": "Unexpected debugger statement.",
+      "filename": "src/handler.ts",
+      "labels": [
+        {
+          "message": "debugger statement",
+          "span": { "offset": 18, "length": 9 },
+          "line": 2,
+          "column": 3,
+          "end_line": 2,
+          "end_column": 12
+        }
+      ]
+    },
+    {
+      "severity": "warning",
+      "code": "no-console",
+      "scope": "eslint",
+      "message": "Unexpected console statement.",
+      "filename": "src/util.ts",
+      "labels": [
+        {
+          "span": { "offset": 0, "length": 11 },
+          "line": 1,
+          "column": 1,
+          "end_line": 1,
+          "end_column": 12
+        }
+      ]
+    },
+    {
+      "severity": "error",
+      "code": "no-debugger",
+      "scope": "eslint",
+      "message": "Unexpected debugger statement.",
+      "filename": "src/handler.ts",
+      "labels": [
+        {
+          "span": { "offset": 50, "length": 9 },
+          "line": 5,
+          "column": 3
+        }
+      ]
+    },
+    {
+      "severity": "advice",
+      "code": "prefer-const",
+      "scope": "eslint",
+      "message": "'count' is never reassigned. Use 'const' instead.",
+      "filename": "src/data.ts"
+    }
+  ]
+}

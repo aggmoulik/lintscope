@@ -2,7 +2,12 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { detectBiomeConfig, detectEslintConfig, detectLinter } from '../src/detect-config';
+import {
+  detectBiomeConfig,
+  detectEslintConfig,
+  detectLinter,
+  detectOxcConfig,
+} from '../src/detect-config';
 
 describe('detectEslintConfig', () => {
   let dir: string;
@@ -102,9 +107,46 @@ describe('detectLinter', () => {
     expect(detectLinter(dir)?.linter).toBe('eslint');
   });
 
-  it('prefers biome when both configs exist', () => {
+  it('prefers biome when biome + eslint configs exist', () => {
     writeFileSync(path.join(dir, 'biome.json'), '{}');
     writeFileSync(path.join(dir, 'eslint.config.mjs'), 'export default [];');
     expect(detectLinter(dir)?.linter).toBe('biome');
+  });
+
+  it('prefers oxc over biome + eslint when all three configs exist', () => {
+    writeFileSync(path.join(dir, '.oxlintrc.json'), '{}');
+    writeFileSync(path.join(dir, 'biome.json'), '{}');
+    writeFileSync(path.join(dir, 'eslint.config.mjs'), 'export default [];');
+    expect(detectLinter(dir)?.linter).toBe('oxc');
+  });
+});
+
+describe('detectOxcConfig', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'lintscope-detect-oxc-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns null when no oxlint config exists', () => {
+    expect(detectOxcConfig(dir)).toBeNull();
+  });
+
+  it('detects .oxlintrc.json', () => {
+    writeFileSync(path.join(dir, '.oxlintrc.json'), '{}');
+    expect(detectOxcConfig(dir)?.path).toBe(path.join(dir, '.oxlintrc.json'));
+  });
+
+  it('detects oxlintrc.json without the leading dot', () => {
+    writeFileSync(path.join(dir, 'oxlintrc.json'), '{}');
+    expect(detectOxcConfig(dir)?.path).toBe(path.join(dir, 'oxlintrc.json'));
+  });
+
+  it('prefers the dotfile when both exist', () => {
+    writeFileSync(path.join(dir, '.oxlintrc.json'), '{}');
+    writeFileSync(path.join(dir, 'oxlintrc.json'), '{}');
+    expect(detectOxcConfig(dir)?.path).toBe(path.join(dir, '.oxlintrc.json'));
   });
 });
