@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { detectEslintConfig } from '../src/detect-config';
+import { detectBiomeConfig, detectEslintConfig, detectLinter } from '../src/detect-config';
 
 describe('detectEslintConfig', () => {
   let dir: string;
@@ -46,5 +46,65 @@ describe('detectEslintConfig', () => {
     const detected = detectEslintConfig(dir);
     // eslint.config.js > .mjs > .cjs > .ts in our detection order
     expect(detected?.path).toBe(path.join(dir, 'eslint.config.mjs'));
+  });
+});
+
+describe('detectBiomeConfig', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'lintscope-detect-biome-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns null when no biome config exists', () => {
+    expect(detectBiomeConfig(dir)).toBeNull();
+  });
+
+  it('detects biome.json', () => {
+    writeFileSync(path.join(dir, 'biome.json'), '{}');
+    expect(detectBiomeConfig(dir)?.path).toBe(path.join(dir, 'biome.json'));
+  });
+
+  it('detects biome.jsonc', () => {
+    writeFileSync(path.join(dir, 'biome.jsonc'), '{}');
+    expect(detectBiomeConfig(dir)?.path).toBe(path.join(dir, 'biome.jsonc'));
+  });
+
+  it('prefers biome.json over biome.jsonc when both exist', () => {
+    writeFileSync(path.join(dir, 'biome.json'), '{}');
+    writeFileSync(path.join(dir, 'biome.jsonc'), '{}');
+    expect(detectBiomeConfig(dir)?.path).toBe(path.join(dir, 'biome.json'));
+  });
+});
+
+describe('detectLinter', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), 'lintscope-detect-linter-'));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns null when no linter config is found', () => {
+    expect(detectLinter(dir)).toBeNull();
+  });
+
+  it('picks biome when only biome config exists', () => {
+    writeFileSync(path.join(dir, 'biome.json'), '{}');
+    expect(detectLinter(dir)?.linter).toBe('biome');
+  });
+
+  it('picks eslint when only eslint config exists', () => {
+    writeFileSync(path.join(dir, 'eslint.config.mjs'), 'export default [];');
+    expect(detectLinter(dir)?.linter).toBe('eslint');
+  });
+
+  it('prefers biome when both configs exist', () => {
+    writeFileSync(path.join(dir, 'biome.json'), '{}');
+    writeFileSync(path.join(dir, 'eslint.config.mjs'), 'export default [];');
+    expect(detectLinter(dir)?.linter).toBe('biome');
   });
 });

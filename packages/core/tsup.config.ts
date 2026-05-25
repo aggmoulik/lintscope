@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/adapters/eslint.ts'],
+  entry: ['src/index.ts', 'src/adapters/eslint.ts', 'src/adapters/biome.ts'],
   format: ['esm'],
   dts: true,
   clean: true,

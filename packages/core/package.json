@@ -1,7 +1,7 @@
 {
   "name": "@lintscope/core",
   "version": "0.0.0",
-  "description": "Linter adapters and normalization. Currently supports ESLint; Biome and OXC follow.",
+  "description": "Linter adapters and normalization. Supports ESLint and Biome. OXC adapter is next.",
   "license": "MIT",
   "author": "aggmoulik <qwertymoulik@gmail.com>",
   "homepage": "https://github.com/aggmoulik/lintscope",
@@ -23,6 +23,10 @@
     "./adapters/eslint": {
       "types": "./dist/adapters/eslint.d.ts",
       "import": "./dist/adapters/eslint.js"
+    },
+    "./adapters/biome": {
+      "types": "./dist/adapters/biome.d.ts",
+      "import": "./dist/adapters/biome.js"
     }
   },
   "files": [

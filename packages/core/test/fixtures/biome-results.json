@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "changed": 0,
+    "duration": { "secs": 0, "nanos": 12345678 },
+    "errors": 2,
+    "warnings": 1,
+    "skipped": 0,
+    "suggestedFixesSkipped": 0,
+    "diagnosticsNotPrinted": 0
+  },
+  "diagnostics": [
+    {
+      "category": "lint/suspicious/noExplicitAny",
+      "severity": "error",
+      "description": "Don't use the any type.",
+      "message": [{ "content": [{ "Slice": "Don't use the any type." }] }],
+      "location": {
+        "path": { "file": "src/handler.ts" },
+        "sourceCode": "export function handler(x: any) {\n  console.log(x);\n  return x;\n}\n",
+        "span": [27, 30]
+      }
+    },
+    {
+      "category": "lint/suspicious/noDebugger",
+      "severity": "error",
+      "description": "Unexpected debugger statement.",
+      "message": "Unexpected debugger statement.",
+      "location": {
+        "path": "src/util.ts",
+        "sourceCode": "function foo() {\n  debugger;\n  return 1;\n}\n",
+        "span": [19, 28]
+      }
+    },
+    {
+      "category": "lint/style/useConst",
+      "severity": "warning",
+      "description": "This let declares a variable that is never reassigned.",
+      "message": "This let declares a variable that is never reassigned.",
+      "location": {
+        "path": { "file": "src/data.ts" },
+        "sourceCode": "let total = 0;\nfor (const n of [1,2,3]) total += n;\nconsole.log(total);\n",
+        "span": [0, 13]
+      }
+    }
+  ]
+}
