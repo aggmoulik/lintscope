@@ -1,3 +1,10 @@
+export {
+  CommandPalette,
+  type CommandPaletteAction,
+  type CommandPaletteProps,
+  isCommandPaletteAction,
+  summarizeForPalette,
+} from './components/command-palette';
 export { DiagnosticCard, type DiagnosticCardProps } from './components/diagnostic-card';
 export { DiagnosticList, type DiagnosticListProps } from './components/diagnostic-list';
 export {
