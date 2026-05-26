@@ -10,9 +10,15 @@ import { startWatcher, type Watcher } from '../watch';
 
 export interface StudioOptions {
   cwd: string;
-  /** Hosted UI URL. Defaults to lintscope.dev. */
+  /**
+   * Hosted UI URL. Precedence: `options.hostedUi` → `LINTSCOPE_HOSTED_UI`
+   * env var → `https://lintscope.dev/studio` default.
+   */
   hostedUi?: string;
-  /** CORS allowlist. Defaults to the hosted UI's origin. */
+  /**
+   * CORS allowlist. Precedence: `options.allowOrigin` → `LINTSCOPE_ALLOW_ORIGIN`
+   * env var → derived from the resolved `hostedUi` URL's origin.
+   */
   allowOrigin?: string;
   /** Listen on this port. Defaults to 0 (random free). */
   port?: number;
@@ -39,8 +45,9 @@ export interface StudioHandle {
  */
 export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
   const cwd = path.resolve(options.cwd);
-  const hostedUi = options.hostedUi ?? DEFAULT_HOSTED_UI;
-  const allowOrigin = options.allowOrigin ?? new URL(hostedUi).origin;
+  const hostedUi = options.hostedUi ?? process.env.LINTSCOPE_HOSTED_UI ?? DEFAULT_HOSTED_UI;
+  const allowOrigin =
+    options.allowOrigin ?? process.env.LINTSCOPE_ALLOW_ORIGIN ?? new URL(hostedUi).origin;
   const watchEnabled = options.watch === true;
 
   const initialReport = await runEslint({ cwd });

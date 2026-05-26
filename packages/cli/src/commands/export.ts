@@ -3,7 +3,7 @@ import path from 'node:path';
 import { runEslint } from '@lintscope/core';
 import type { LintReport } from '@lintscope/schema';
 
-export interface ScanOptions {
+export interface ExportOptions {
   cwd: string;
   /** Output path. `'-'` (or omitted) prints to stdout. */
   out?: string;
@@ -11,9 +11,10 @@ export interface ScanOptions {
 
 /**
  * One-shot lint + emit JSON. Non-interactive — does not open a browser, does
- * not spawn a studio server. Used in CI / scripts.
+ * not spawn a studio server. Used in CI / scripts that want to consume the
+ * report programmatically.
  */
-export async function runScan(options: ScanOptions): Promise<{
+export async function runExport(options: ExportOptions): Promise<{
   report: LintReport;
   writtenTo: 'stdout' | string;
 }> {
