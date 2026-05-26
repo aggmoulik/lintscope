@@ -147,6 +147,21 @@ describe('<CommandPalette />', () => {
     expect(screen.getByTestId('command-palette')).toBeDefined();
   });
 
+  it('exposes an accessible dialog title (Radix DialogTitle requirement)', () => {
+    render(
+      <CommandPalette
+        report={report}
+        open={true}
+        onOpenChange={() => {}}
+        onAction={() => {}}
+        bindShortcut={false}
+      />,
+    );
+    // The dialog must be labelled by a real DialogTitle, otherwise Radix
+    // logs the "DialogContent requires a DialogTitle" accessibility error.
+    expect(screen.getByRole('dialog', { name: /command palette/i })).toBeDefined();
+  });
+
   it('shows a "Clear all filters" item in the Actions group', () => {
     render(
       <CommandPalette

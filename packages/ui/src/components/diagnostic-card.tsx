@@ -1,3 +1,5 @@
+'use client';
+
 import type { Diagnostic } from '@lintscope/schema';
 import { cn } from '../lib/utils';
 import { SeverityBadge } from './severity-badge';

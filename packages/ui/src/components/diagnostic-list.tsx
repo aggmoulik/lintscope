@@ -1,3 +1,5 @@
+'use client';
+
 import type { Diagnostic } from '@lintscope/schema';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';

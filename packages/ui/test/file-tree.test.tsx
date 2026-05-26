@@ -41,9 +41,7 @@ describe('<FileTree />', () => {
   it('rolls up error and warning counts into parent folders', () => {
     render(<FileTree files={sample} />);
     // The `src` folder aggregates: 1+0+3 = 4 errors · 0+2+1 = 3 warnings.
-    const srcButton = screen
-      .getAllByRole('button')
-      .find((b) => b.textContent?.startsWith('▾src') || b.textContent?.startsWith('▸src'));
+    const srcButton = screen.getByText('src').closest('button');
     expect(srcButton?.textContent).toContain('4');
     expect(srcButton?.textContent).toContain('3');
   });

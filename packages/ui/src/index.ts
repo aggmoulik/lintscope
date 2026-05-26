@@ -16,6 +16,16 @@ export {
   type DiffRowKind,
 } from './components/diff-preview';
 export { FileTree, type FileTreeProps } from './components/file-tree';
+export {
+  File,
+  type FileProps,
+  FileTreeSearch,
+  type FileTreeSearchProps,
+  FileTreeView,
+  type FileTreeViewProps,
+  Folder,
+  type FolderProps,
+} from './components/file-tree-view';
 export { LintDashboard, type LintDashboardProps } from './components/lint-dashboard';
 export {
   LinterBadge,

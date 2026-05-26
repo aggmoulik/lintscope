@@ -1,3 +1,5 @@
+'use client';
+
 import type { Diagnostic, LintReport } from '@lintscope/schema';
 import { useCallback, useMemo, useState } from 'react';
 import {

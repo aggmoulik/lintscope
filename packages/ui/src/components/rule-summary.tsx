@@ -1,3 +1,5 @@
+'use client';
+
 import type { Diagnostic, Severity } from '@lintscope/schema';
 import { useMemo } from 'react';
 import { cn } from '../lib/utils';

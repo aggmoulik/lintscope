@@ -22,7 +22,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "turbo typecheck",
-    "ui:add": "pnpm --filter @lintscope/ui shadcn add",
+    "ui:add": "pnpm --filter @lintscope/ui exec -- pnpm dlx shadcn@latest add",
     "changeset": "changeset",
     "release": "turbo build --filter='./packages/*' && changeset publish"
   },

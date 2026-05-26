@@ -1,4 +1,7 @@
+'use client';
+
 import type { Diagnostic, LintReport, Severity } from '@lintscope/schema';
+import * as Dialog from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
 import { useEffect, useMemo } from 'react';
 import { cn } from '../lib/utils';
@@ -168,134 +171,151 @@ export function CommandPalette({
   };
 
   return (
-    <Command.Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      label="Command palette"
-      className={cn(
-        'fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[18vh] backdrop-blur-sm',
-        '[&_[cmdk-overlay]]:fixed [&_[cmdk-overlay]]:inset-0 [&_[cmdk-overlay]]:bg-black/40',
-        className,
-      )}
-      data-testid="command-palette"
-    >
-      <div className="w-full max-w-xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950">
-        <Command.Input
-          placeholder="Filter or jump…"
-          className="w-full border-b border-zinc-200 bg-transparent px-4 py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-        />
-        <Command.List className="max-h-[60vh] overflow-y-auto px-2 py-2 text-sm">
-          <Command.Empty className="px-3 py-6 text-center text-zinc-500">No matches.</Command.Empty>
-
-          <Command.Group
-            heading="Actions"
-            className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
-          >
-            <PaletteItem value="clear-all-filters" onSelect={() => run({ type: 'clear-filters' })}>
-              Clear all filters
-            </PaletteItem>
-          </Command.Group>
-
-          {groups.severities.length > 0 && (
-            <Command.Group
-              heading="Filter by severity"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
-            >
-              {groups.severities.map((s) => (
-                <PaletteItem
-                  key={`sev:${s.severity}`}
-                  value={`severity ${s.severity}`}
-                  onSelect={() => run({ type: 'filter-severity', severity: s.severity })}
-                >
-                  <span
-                    aria-hidden
-                    className={cn('h-1.5 w-1.5 shrink-0 rounded-full', severityDot[s.severity])}
-                  />
-                  <span className="capitalize">{s.label}</span>
-                  <CountBadge>{s.count}</CountBadge>
-                </PaletteItem>
-              ))}
-            </Command.Group>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+        <Dialog.Content
+          aria-label="Command palette"
+          data-testid="command-palette"
+          className={cn(
+            'fixed left-1/2 top-[18vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950',
+            className,
           )}
+        >
+          {/* cmdk's Command.Dialog never renders a Radix DialogTitle, which
+              trips Radix's accessibility check. Compose the Dialog ourselves
+              with a visually-hidden title + description so screen readers get
+              a name and the dev-time warning goes away. */}
+          <Dialog.Title className="sr-only">Command palette</Dialog.Title>
+          <Dialog.Description className="sr-only">
+            Filter diagnostics by severity, rule, file, or linter.
+          </Dialog.Description>
+          <Command label="Command palette">
+            <Command.Input
+              placeholder="Filter or jump…"
+              className="w-full border-b border-zinc-200 bg-transparent px-4 py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            />
+            <Command.List className="max-h-[60vh] overflow-y-auto px-2 py-2 text-sm">
+              <Command.Empty className="px-3 py-6 text-center text-zinc-500">
+                No matches.
+              </Command.Empty>
 
-          {groups.linters.length > 1 && (
-            <Command.Group
-              heading="Filter by linter"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
-            >
-              {groups.linters.map((l) => (
+              <Command.Group
+                heading="Actions"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+              >
                 <PaletteItem
-                  key={`linter:${l.source}`}
-                  value={`linter ${l.source}`}
-                  onSelect={() => run({ type: 'filter-linter', source: l.source })}
+                  value="clear-all-filters"
+                  onSelect={() => run({ type: 'clear-filters' })}
                 >
-                  <span className="font-mono uppercase tracking-wider">{l.source}</span>
-                  <CountBadge>{l.count}</CountBadge>
+                  Clear all filters
                 </PaletteItem>
-              ))}
-            </Command.Group>
-          )}
+              </Command.Group>
 
-          {groups.rules.length > 0 && (
-            <Command.Group
-              heading="Filter by rule"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
-            >
-              {groups.rules.map((r) => (
-                <PaletteItem
-                  key={`rule:${r.ruleId}`}
-                  value={`rule ${r.ruleId}`}
-                  onSelect={() => run({ type: 'filter-rule', ruleId: r.ruleId })}
+              {groups.severities.length > 0 && (
+                <Command.Group
+                  heading="Filter by severity"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
                 >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'h-1.5 w-1.5 shrink-0 rounded-full',
-                      severityDot[r.dominantSeverity],
-                    )}
-                  />
-                  <span className="truncate font-mono">{r.ruleId}</span>
-                  <CountBadge>{r.count}</CountBadge>
-                  {r.url && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (r.url) run({ type: 'open-rule-docs', url: r.url });
-                      }}
-                      className="ml-1 rounded p-0.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                      aria-label={`Open docs for ${r.ruleId}`}
-                      data-testid="open-docs-button"
+                  {groups.severities.map((s) => (
+                    <PaletteItem
+                      key={`sev:${s.severity}`}
+                      value={`severity ${s.severity}`}
+                      onSelect={() => run({ type: 'filter-severity', severity: s.severity })}
                     >
-                      ↗
-                    </button>
-                  )}
-                </PaletteItem>
-              ))}
-            </Command.Group>
-          )}
+                      <span
+                        aria-hidden
+                        className={cn('h-1.5 w-1.5 shrink-0 rounded-full', severityDot[s.severity])}
+                      />
+                      <span className="capitalize">{s.label}</span>
+                      <CountBadge>{s.count}</CountBadge>
+                    </PaletteItem>
+                  ))}
+                </Command.Group>
+              )}
 
-          {groups.files.length > 0 && (
-            <Command.Group
-              heading="Jump to file"
-              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
-            >
-              {groups.files.map((f) => (
-                <PaletteItem
-                  key={`file:${f.relativePath}`}
-                  value={`file ${f.relativePath}`}
-                  onSelect={() => run({ type: 'filter-file', relativePath: f.relativePath })}
+              {groups.linters.length > 1 && (
+                <Command.Group
+                  heading="Filter by linter"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
                 >
-                  <span className="truncate font-mono text-xs">{f.relativePath}</span>
-                  {f.errorCount > 0 && <CountBadge tone="error">{f.errorCount}</CountBadge>}
-                  {f.warningCount > 0 && <CountBadge tone="warning">{f.warningCount}</CountBadge>}
-                </PaletteItem>
-              ))}
-            </Command.Group>
-          )}
-        </Command.List>
-      </div>
-    </Command.Dialog>
+                  {groups.linters.map((l) => (
+                    <PaletteItem
+                      key={`linter:${l.source}`}
+                      value={`linter ${l.source}`}
+                      onSelect={() => run({ type: 'filter-linter', source: l.source })}
+                    >
+                      <span className="font-mono uppercase tracking-wider">{l.source}</span>
+                      <CountBadge>{l.count}</CountBadge>
+                    </PaletteItem>
+                  ))}
+                </Command.Group>
+              )}
+
+              {groups.rules.length > 0 && (
+                <Command.Group
+                  heading="Filter by rule"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                >
+                  {groups.rules.map((r) => (
+                    <PaletteItem
+                      key={`rule:${r.ruleId}`}
+                      value={`rule ${r.ruleId}`}
+                      onSelect={() => run({ type: 'filter-rule', ruleId: r.ruleId })}
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          'h-1.5 w-1.5 shrink-0 rounded-full',
+                          severityDot[r.dominantSeverity],
+                        )}
+                      />
+                      <span className="truncate font-mono">{r.ruleId}</span>
+                      <CountBadge>{r.count}</CountBadge>
+                      {r.url && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (r.url) run({ type: 'open-rule-docs', url: r.url });
+                          }}
+                          className="ml-1 rounded p-0.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                          aria-label={`Open docs for ${r.ruleId}`}
+                          data-testid="open-docs-button"
+                        >
+                          ↗
+                        </button>
+                      )}
+                    </PaletteItem>
+                  ))}
+                </Command.Group>
+              )}
+
+              {groups.files.length > 0 && (
+                <Command.Group
+                  heading="Jump to file"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                >
+                  {groups.files.map((f) => (
+                    <PaletteItem
+                      key={`file:${f.relativePath}`}
+                      value={`file ${f.relativePath}`}
+                      onSelect={() => run({ type: 'filter-file', relativePath: f.relativePath })}
+                    >
+                      <span className="truncate font-mono text-xs">{f.relativePath}</span>
+                      {f.errorCount > 0 && <CountBadge tone="error">{f.errorCount}</CountBadge>}
+                      {f.warningCount > 0 && (
+                        <CountBadge tone="warning">{f.warningCount}</CountBadge>
+                      )}
+                    </PaletteItem>
+                  ))}
+                </Command.Group>
+              )}
+            </Command.List>
+          </Command>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
