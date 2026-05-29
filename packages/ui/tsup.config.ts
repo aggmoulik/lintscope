@@ -15,6 +15,8 @@ export default defineConfig({
     '@radix-ui/react-dialog',
     '@radix-ui/react-accordion',
     'lucide-react',
+    'diff',
+    'parse-diff',
   ],
   // Tsup bundles all per-file `'use client'` directives away. The barrel
   // re-exports a mix of client + server components; mark the whole bundle
