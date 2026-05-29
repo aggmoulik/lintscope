@@ -10,14 +10,17 @@ export interface LintContext {
   projectRoot: string;
   /** Display name surfaced to the studio page via `/init`. */
   name: string;
-  /** Linter the CLI session is bound to. v1 = eslint; biome/oxc later. */
-  linter: 'eslint';
+  /** Linter the CLI session is bound to. */
+  linter: 'eslint' | 'biome' | 'oxc';
   /** Memoized report. Updated by /scan and (later) the watch reconciler. */
   report: LintReport;
   /**
    * Re-run the linter. Returns the fresh report; the caller is responsible for
    * storing it back into `context.report` if desired. This indirection lets
    * tests inject a mock without spawning ESLint.
+   *
+   * Optional: omitted in render-only modes like `lintscope view`, where there
+   * is no linter to re-run and `/scan` is not registered.
    */
-  rerun: () => Promise<LintReport>;
+  rerun?: () => Promise<LintReport>;
 }

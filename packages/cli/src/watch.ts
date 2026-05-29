@@ -56,6 +56,12 @@ export function startWatcher(
   broadcaster: WatcherBroadcaster,
   options: WatcherOptions = {},
 ): Watcher {
+  // Watch mode is meaningless without a way to re-run the linter; the caller
+  // (the `studio` command) always provides one, but `view` mode does not.
+  if (!context.rerun) {
+    throw new Error('startWatcher requires a LintContext.rerun function');
+  }
+  const rerun = context.rerun;
   const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const log = options.log ?? ((line: string) => console.error(line));
   const ignored = [...DEFAULT_IGNORED, ...(options.ignored ?? [])];
@@ -81,7 +87,7 @@ export function startWatcher(
     scanning = true;
     const previousDiagnostics = context.report.diagnostics;
     try {
-      const fresh = await context.rerun();
+      const fresh = await rerun();
       if (closed) return;
       context.report = fresh;
       cycleCount += 1;

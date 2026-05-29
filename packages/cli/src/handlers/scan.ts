@@ -8,6 +8,11 @@ import type { LintContext } from '../context';
  * Mutates `context.report` so subsequent `/report` calls return the new data.
  */
 export async function handleScanRequest(context: LintContext): Promise<ScanResponse> {
+  if (!context.rerun) {
+    // /scan should never be registered without a rerun (e.g. in `view` mode);
+    // surface a clear server error if a caller mis-wires the endpoint set.
+    throw new Error('handleScanRequest requires a LintContext.rerun function');
+  }
   const fresh = await context.rerun();
   context.report = fresh;
   return ScanResponseSchema.parse(fresh);

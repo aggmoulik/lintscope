@@ -1,7 +1,9 @@
-import { Command } from 'commander';
+import { Command, InvalidArgumentError } from 'commander';
 import { runExport } from '../commands/export';
 import { runInit } from '../commands/init';
 import { runStudio, type StudioHandle, type StudioOptions } from '../commands/studio';
+import { runView, type ViewHandle, type ViewOptions } from '../commands/view';
+import { LINTER_FORMATS, type LinterFormat } from '../load-report';
 
 const program = new Command();
 
@@ -95,6 +97,60 @@ applyStudioFlags(
   program.command('watch').description('Lint + watch files for changes; pushes updates over SSE'),
   /* includeWatch */ false,
 ).action((opts: Omit<ScanCliOptions, 'watch'>) => launchStudio({ ...opts, watch: true }, 'watch'));
+
+// `view` — render existing linter JSON in the studio; never spawns a linter.
+interface ViewCliOptions {
+  from: LinterFormat;
+  hostedUi?: string;
+  allowOrigin?: string;
+  port?: number;
+  open?: boolean;
+  dev?: boolean;
+}
+
+function parseLinterFormat(value: string): LinterFormat {
+  if ((LINTER_FORMATS as readonly string[]).includes(value)) return value as LinterFormat;
+  throw new InvalidArgumentError(`must be one of ${LINTER_FORMATS.join(', ')}`);
+}
+
+async function launchView(file: string | undefined, opts: ViewCliOptions): Promise<void> {
+  const resolvedHostedUi = opts.hostedUi ?? (opts.dev ? DEV_HOSTED_UI : undefined);
+
+  const viewOptions: ViewOptions = {
+    cwd: process.cwd(),
+    from: opts.from,
+    ...(file ? { file } : {}),
+    ...(resolvedHostedUi ? { hostedUi: resolvedHostedUi } : {}),
+    ...(opts.allowOrigin ? { allowOrigin: opts.allowOrigin } : {}),
+    ...(typeof opts.port === 'number' ? { port: opts.port } : {}),
+    ...(opts.open === false ? { open: false } : {}),
+  };
+  const handle: ViewHandle = await runView(viewOptions);
+
+  console.log(`✓ lintscope view ready (--from ${opts.from}, no linter run)`);
+  console.log(`  local: http://localhost:${handle.studio.port}`);
+  console.log(`  open : ${handle.studio.url}`);
+
+  const shutdown = async () => {
+    console.log('\n→ shutting down…');
+    await handle.studio.close();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}
+
+applyStudioFlags(
+  program
+    .command('view [file]')
+    .description('Render an existing linter JSON report in the studio (no linter run)')
+    .requiredOption(
+      '--from <linter>',
+      `input format — one of ${LINTER_FORMATS.join(', ')}`,
+      parseLinterFormat,
+    ),
+  /* includeWatch */ false,
+).action((file: string | undefined, opts: ViewCliOptions) => launchView(file, opts));
 
 // `init` writes a config file.
 program
