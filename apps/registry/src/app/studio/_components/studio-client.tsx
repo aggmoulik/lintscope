@@ -81,6 +81,12 @@ function StudioBody({ connection }: { connection: StudioConnection }) {
                 watching
               </span>
             )}
+            {!state.init.capabilities.scan && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 ring-1 ring-inset ring-zinc-500/20 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-400/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                render-only
+              </span>
+            )}
           </p>
         </div>
       </header>
