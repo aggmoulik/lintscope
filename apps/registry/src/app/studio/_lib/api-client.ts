@@ -1,4 +1,5 @@
 import {
+  FileResponseSchema,
   HTTP_ENDPOINTS,
   type InitResponse,
   InitResponseSchema,
@@ -121,5 +122,39 @@ export const studioApi = {
   },
   scan(connection: StudioConnection): Promise<ScanResponse> {
     return authedFetch(connection, HTTP_ENDPOINTS.scan, ScanResponseSchema);
+  },
+  /**
+   * Fetch source for one file by its `relativePath` (relative to projectRoot).
+   * Returns just the UTF-8 content — the caller is the autofix preview, which
+   * doesn't care about the path echo. The server enforces `safePath`
+   * containment, so a malicious path is a 4xx, not a leak.
+   */
+  async file(connection: StudioConnection, relativePath: string): Promise<string> {
+    let res: Response;
+    try {
+      res = await fetch(authedUrl(connection, HTTP_ENDPOINTS.file.path, { path: relativePath }), {
+        method: HTTP_ENDPOINTS.file.method,
+        cache: 'no-store',
+      });
+    } catch (err) {
+      throw new StudioConnectionError(
+        `Could not reach studio server at ${baseUrl(connection)} — is the CLI still running?`,
+        err,
+      );
+    }
+    if (res.status === 401) throw new StudioAuthError();
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new StudioHttpError(res.status, text || res.statusText);
+    }
+    const json: unknown = await res.json();
+    const parsed = FileResponseSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new StudioSchemaError(
+        HTTP_ENDPOINTS.file.path,
+        parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+      );
+    }
+    return parsed.data.content;
   },
 };

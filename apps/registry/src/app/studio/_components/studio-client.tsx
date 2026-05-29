@@ -2,7 +2,8 @@
 
 import { LintDashboard } from '@lintscope/ui';
 import { useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { studioApi } from '../_lib/api-client';
 import { parseConnectionParams, type StudioConnection } from '../_lib/connection';
 import { useStudioData } from '../_lib/use-studio-data';
 import { ConnectionError } from './connection-error';
@@ -28,6 +29,10 @@ export function StudioClient() {
 
 function StudioBody({ connection }: { connection: StudioConnection }) {
   const { state } = useStudioData(connection);
+  const fetchSource = useCallback(
+    (relativePath: string) => studioApi.file(connection, relativePath),
+    [connection],
+  );
 
   if (state.kind === 'pending') {
     return <ConnectionPending />;
@@ -90,7 +95,10 @@ function StudioBody({ connection }: { connection: StudioConnection }) {
           </p>
         </div>
       </header>
-      <LintDashboard report={state.report} />
+      <LintDashboard
+        report={state.report}
+        {...(state.init.capabilities.file ? { onFetchSource: fetchSource } : {})}
+      />
     </div>
   );
 }
