@@ -14,6 +14,8 @@ export interface DiagnosticListProps {
   /** Container height. The list is virtualized inside this scrolling area. */
   height?: number | string;
   onSelect?: (diagnostic: Diagnostic) => void;
+  /** Forwarded to each `<DiagnosticCard />` for the autofix preview. */
+  onFetchSource?: (relativePath: string) => Promise<string>;
   emptyState?: React.ReactNode;
 }
 
@@ -23,6 +25,7 @@ export function DiagnosticList({
   estimateSize = 112,
   height = 600,
   onSelect,
+  onFetchSource,
   emptyState,
 }: DiagnosticListProps) {
   const parentRef = useRef<HTMLDivElement | null>(null);
@@ -80,7 +83,11 @@ export function DiagnosticList({
                 paddingBottom: 8,
               }}
             >
-              <DiagnosticCard diagnostic={diagnostic} onClick={onSelect} />
+              <DiagnosticCard
+                diagnostic={diagnostic}
+                onClick={onSelect}
+                {...(onFetchSource ? { onFetchSource } : {})}
+              />
             </div>
           );
         })}

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Diagnostic, LintReport } from '@lintscope/schema';
+import type { LintReport } from '@lintscope/schema';
 import { useCallback, useMemo, useState } from 'react';
 import {
   applyFilters,
@@ -11,7 +11,6 @@ import {
 import { cn } from '../lib/utils';
 import { CommandPalette, type CommandPaletteAction } from './command-palette';
 import { DiagnosticList } from './diagnostic-list';
-import { DiffPreview } from './diff-preview';
 import { FileTree } from './file-tree';
 import { RuleSummary } from './rule-summary';
 
@@ -19,26 +18,21 @@ export interface LintDashboardProps {
   report: LintReport;
   className?: string;
   /**
-   * Optional source resolver. When provided, the right-side panel renders a
-   * <DiffPreview /> for the selected diagnostic if it has a fix. Return null
-   * (or omit the prop) to disable the diff panel.
+   * Async source fetcher forwarded to each `<DiagnosticCard />` for the
+   * inline preview — green/red DiffViewer for ESLint autofixes, or a
+   * <CodePreview /> with the error line highlighted for everything else.
+   * The studio page passes `(p) => studioApi.file(connection, p)`.
    */
-  getFileSource?: (relativePath: string) => string | null;
+  onFetchSource?: (relativePath: string) => Promise<string>;
 }
 
-export function LintDashboard({ report, className, getFileSource }: LintDashboardProps) {
+export function LintDashboard({ report, className, onFetchSource }: LintDashboardProps) {
   const [filters, setFilters] = useState<DashboardFilters>(EMPTY_FILTERS);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const filtered = useMemo(
     () => applyFilters(report.diagnostics, filters),
     [report.diagnostics, filters],
-  );
-
-  const selectedDiagnostic = useMemo(
-    () => (selectedId ? (filtered.find((d) => d.id === selectedId) ?? null) : null),
-    [filtered, selectedId],
   );
 
   const handlePaletteAction = useCallback((action: CommandPaletteAction) => {
@@ -74,15 +68,6 @@ export function LintDashboard({ report, className, getFileSource }: LintDashboar
   const onSelectRule = useCallback((ruleId: string | null) => {
     setFilters((f) => ({ ...f, ruleId: ruleId === f.ruleId ? null : ruleId }));
   }, []);
-
-  const onSelectDiagnostic = useCallback((d: Diagnostic) => {
-    setSelectedId((current) => (current === d.id ? null : d.id));
-  }, []);
-
-  const fileSource =
-    selectedDiagnostic?.fix && getFileSource
-      ? getFileSource(selectedDiagnostic.relativePath)
-      : null;
 
   return (
     <section
@@ -124,17 +109,14 @@ export function LintDashboard({ report, className, getFileSource }: LintDashboar
         <div className="flex flex-col gap-4">
           <DiagnosticList
             diagnostics={filtered}
-            onSelect={onSelectDiagnostic}
-            height={fileSource ? 320 : 600}
+            {...(onFetchSource ? { onFetchSource } : {})}
+            height={600}
             emptyState={
               hasActiveFilters(filters)
                 ? 'No diagnostics match the current filters.'
                 : 'No diagnostics. 🎉'
             }
           />
-          {selectedDiagnostic && fileSource && (
-            <DiffPreview diagnostic={selectedDiagnostic} source={fileSource} />
-          )}
         </div>
       </div>
 

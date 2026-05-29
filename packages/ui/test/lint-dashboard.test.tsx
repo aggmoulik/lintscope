@@ -1,6 +1,6 @@
 import type { Diagnostic, LintReport } from '@lintscope/schema';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { LintDashboard } from '../src/components/lint-dashboard';
 
 function makeDiagnostic(overrides: Partial<Diagnostic>): Diagnostic {
@@ -112,35 +112,9 @@ describe('<LintDashboard /> v2', () => {
     fireEvent.click(screen.getByTestId('open-palette-button'));
     expect(screen.getByTestId('command-palette')).toBeDefined();
   });
-
-  it('renders the DiffPreview panel when a diagnostic with a fix is selected and source resolves', () => {
-    const getFileSource = vi.fn((path: string) => (path === 'src/b.ts' ? 'let count = 1;' : null));
-    render(<LintDashboard report={REPORT} getFileSource={getFileSource} />);
-    expect(screen.queryByTestId('diff-preview')).toBeNull();
-
-    // Narrow to the prefer-const diagnostic (the only one with a fix).
-    const ruleSummary = screen.getByTestId('rule-summary');
-    fireEvent.click(within(ruleSummary).getByText('prefer-const'));
-
-    // After filtering, the DiagnosticList shows only d3. Find its card by
-    // its diagnostic id and click it to select.
-    const list = screen.getByTestId('diagnostic-list-scroll');
-    const cards = list.querySelectorAll('[data-diagnostic-id]');
-    expect(cards).toHaveLength(1);
-    fireEvent.click(cards[0] as HTMLElement);
-
-    expect(screen.getByTestId('diff-preview')).toBeDefined();
-    expect(getFileSource).toHaveBeenCalledWith('src/b.ts');
-  });
-
-  it('hides the DiffPreview when getFileSource returns null', () => {
-    const getFileSource = vi.fn(() => null);
-    render(<LintDashboard report={REPORT} getFileSource={getFileSource} />);
-    const ruleSummary = screen.getByTestId('rule-summary');
-    fireEvent.click(within(ruleSummary).getByText('prefer-const'));
-    const list = screen.getByTestId('diagnostic-list-scroll');
-    const cards = list.querySelectorAll('[data-diagnostic-id]');
-    fireEvent.click(cards[0] as HTMLElement);
-    expect(screen.queryByTestId('diff-preview')).toBeNull();
-  });
 });
+
+// Note: the previous "right-side DiffPreview panel" tests were removed when
+// LintDashboard stopped rendering that panel — every diagnostic card now
+// renders its own inline preview (DiffViewer for autofixes, CodePreview
+// otherwise) via the `onFetchSource` prop. See diagnostic-card.tsx.

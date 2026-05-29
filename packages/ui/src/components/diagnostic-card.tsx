@@ -1,18 +1,74 @@
 'use client';
 
 import type { Diagnostic } from '@lintscope/schema';
+import { useEffect, useState } from 'react';
+import { applyEslintFix } from '../lib/apply-fix';
 import { cn } from '../lib/utils';
+import { AutofixHint } from './autofix-hint';
+import { CodePreview } from './code-preview';
+import { DiffViewer } from './diff-viewer';
 import { SeverityBadge } from './severity-badge';
 
 export interface DiagnosticCardProps {
   diagnostic: Diagnostic;
   className?: string;
   onClick?: (diagnostic: Diagnostic) => void;
+  /**
+   * Optional source fetcher. When provided, the card reveals a toggle that
+   * lazily fetches the file source on click:
+   *   - "View autofix" for ESLint diagnostics with `fix` data → green/red diff
+   *   - "View source" for everything else → CodePreview with the error line
+   *     highlighted in red
+   */
+  onFetchSource?: (relativePath: string) => Promise<string>;
 }
 
-export function DiagnosticCard({ diagnostic, className, onClick }: DiagnosticCardProps) {
+type PreviewState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'ready'; source: string }
+  | { kind: 'error'; message: string };
+
+export function DiagnosticCard({
+  diagnostic,
+  className,
+  onClick,
+  onFetchSource,
+}: DiagnosticCardProps) {
   const hasFix = Boolean(diagnostic.fix);
   const hasSuggestions = Boolean(diagnostic.suggestions?.length);
+  const showHint = diagnostic.source === 'biome' || diagnostic.source === 'oxc';
+  const canPreview = Boolean(onFetchSource);
+  const previewIsAutofix = hasFix && diagnostic.source === 'eslint';
+
+  const [preview, setPreview] = useState<PreviewState>({ kind: 'idle' });
+
+  // Fetch the file source on mount when a fetcher is provided. The virtualizer
+  // only mounts visible cards (+ overscan), so this fires once per visible
+  // diagnostic — no eager fetch for off-screen rows.
+  useEffect(() => {
+    if (!onFetchSource) {
+      setPreview({ kind: 'idle' });
+      return;
+    }
+    let cancelled = false;
+    setPreview({ kind: 'loading' });
+    onFetchSource(diagnostic.relativePath)
+      .then((source) => {
+        if (!cancelled) setPreview({ kind: 'ready', source });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setPreview({
+            kind: 'error',
+            message: err instanceof Error ? err.message : String(err),
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [diagnostic.relativePath, onFetchSource]);
 
   return (
     <article
@@ -74,12 +130,47 @@ export function DiagnosticCard({ diagnostic, className, onClick }: DiagnosticCar
               suggested
             </span>
           )}
+          {showHint && <AutofixHint source={diagnostic.source as 'biome' | 'oxc'} />}
         </div>
       </header>
 
       <p className="text-sm leading-relaxed text-zinc-900 dark:text-zinc-100">
         {diagnostic.message}
       </p>
+
+      {canPreview && (
+        // Always visible — clicks inside the panel intentionally bubble to the
+        // article's onClick (if any); the panel has no interactive content.
+        <div className="text-xs" data-testid="preview-panel">
+          {preview.kind === 'loading' && (
+            <p className="text-zinc-500 dark:text-zinc-400">Loading source…</p>
+          )}
+          {preview.kind === 'error' && (
+            <p className="text-red-600 dark:text-red-400">
+              Couldn't load source: {preview.message}
+            </p>
+          )}
+          {preview.kind === 'ready' &&
+            (previewIsAutofix && diagnostic.fix ? (
+              <DiffViewer
+                oldFile={{ content: preview.source, name: diagnostic.relativePath }}
+                newFile={{
+                  content: applyEslintFix(preview.source, diagnostic.fix),
+                  name: diagnostic.relativePath,
+                }}
+                size="sm"
+                showIcon={false}
+              />
+            ) : (
+              <CodePreview
+                source={preview.source}
+                line={diagnostic.line}
+                {...(diagnostic.endLine !== undefined ? { endLine: diagnostic.endLine } : {})}
+                fileName={diagnostic.relativePath}
+              />
+            ))}
+        </div>
+      )}
 
       <footer className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-500">
         <span className="font-mono">

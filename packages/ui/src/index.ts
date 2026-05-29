@@ -1,3 +1,5 @@
+export { AutofixHint, type AutofixHintProps } from './components/autofix-hint';
+export { CodePreview, type CodePreviewProps } from './components/code-preview';
 export {
   CommandPalette,
   type CommandPaletteAction,
@@ -15,6 +17,25 @@ export {
   type DiffRow,
   type DiffRowKind,
 } from './components/diff-preview';
+export {
+  computeDiff,
+  DiffViewer,
+  DiffViewerContent,
+  DiffViewerFile,
+  DiffViewerFileBadge,
+  DiffViewerHeader,
+  DiffViewerLine,
+  type DiffViewerProps,
+  DiffViewerSplitLine,
+  DiffViewerStats,
+  diffLineTextVariants,
+  diffLineVariants,
+  diffViewerVariants,
+  type ParsedFile,
+  type ParsedLine,
+  parsePatch,
+  type SplitLinePair,
+} from './components/diff-viewer';
 export { FileTree, type FileTreeProps } from './components/file-tree';
 export {
   File,
@@ -38,6 +59,7 @@ export {
   summarizeByRule,
 } from './components/rule-summary';
 export { SeverityBadge, type SeverityBadgeProps } from './components/severity-badge';
+export { applyEslintFix, type EslintFix } from './lib/apply-fix';
 export {
   applyFilters,
   type DashboardFilters,
