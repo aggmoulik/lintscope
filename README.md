@@ -37,6 +37,30 @@ npx lintscope studio
 - The hosted UI is **always-latest** — no CLI republishes needed for UI improvements.
 - Your code and your diagnostics **never leave your machine** — the studio page only ever talks to your local CLI.
 
+## View your existing lint results
+
+Already running ESLint, Biome, or OXC in your repo or CI? Pipe their JSON straight into the studio — **lintscope never spawns the linter**, you do:
+
+```sh
+# ESLint
+eslint -f json . | npx lintscope view --from eslint
+
+# Biome
+biome check --reporter=json . | npx lintscope view --from biome
+
+# OXC / oxlint
+oxlint --format=json . | npx lintscope view --from oxc
+```
+
+Or pass a saved file:
+
+```sh
+eslint -f json . > report.json
+npx lintscope view --from eslint report.json
+```
+
+The browser opens to the same studio dashboard as `lintscope scan`, in **render-only** mode (no re-run, no watch). Run the command from your repo root so file-source previews resolve.
+
 You also get a **shadcn-compatible component registry** for embedding pieces of the UI in your own dashboards:
 
 ```sh
@@ -66,7 +90,7 @@ apps/
                  · /r/[name].json registry
                  · /studio (the hosted dashboard UI)
 packages/
-  cli            Commander CLI: init | studio | scan | watch | serve | export
+  cli            Commander CLI: init | scan | studio | watch | view | export
   studio-server  Lint-agnostic framework: HTTP + CORS + token + SSE + browser-open.
                  Designed for standalone publish post-v1.0 (the Drizzle-Studio
                  pattern as a reusable library — no equivalent exists today).
