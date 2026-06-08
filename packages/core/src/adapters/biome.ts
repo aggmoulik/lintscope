@@ -7,6 +7,7 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
+import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
 
 /**
  * Subset of Biome's `--reporter=json` output that we depend on. Declared
@@ -199,7 +200,10 @@ export interface RunBiomeOptions {
   cwd: string;
   /** Globs / paths to lint. Defaults to `['.']` so Biome's own config drives the file set. */
   patterns?: string[];
-  /** Optional explicit biome binary path. Defaults to `biome` on PATH. */
+  /**
+   * Explicit biome binary path (override). When omitted, the project-local
+   * `node_modules/.bin/biome` is preferred, falling back to `biome` on PATH.
+   */
   binary?: string;
 }
 
@@ -209,12 +213,21 @@ export interface RunBiomeOptions {
  */
 export async function runBiome(options: RunBiomeOptions): Promise<LintReport> {
   const patterns = options.patterns ?? ['.'];
-  const binary = options.binary ?? 'biome';
+  const { command: binary, resolvedFrom } = resolveLinterBin({
+    projectRoot: options.cwd,
+    name: 'biome',
+    ...(options.binary ? { override: options.binary } : {}),
+  });
   const args = ['check', '--reporter=json', ...patterns];
 
   const child = spawn(binary, args, {
     cwd: options.cwd,
     stdio: ['ignore', 'pipe', 'pipe'],
+    // A local `.bin` shim on Windows is a `.cmd`, which Node refuses to spawn
+    // without a shell (CVE-2024-27980). PATH/override stay shell-free.
+    // NOTE: shell mode doesn't quote a binary path containing spaces — tracked
+    // as a Phase D Windows follow-up (adopt cross-spawn if it bites).
+    shell: resolvedFrom === 'local' && /\.(cmd|bat)$/i.test(binary),
   });
 
   const stdoutChunks: Buffer[] = [];
@@ -266,6 +279,6 @@ export async function runBiome(options: RunBiomeOptions): Promise<LintReport> {
 
   return mapBiomeResults(payload, {
     cwd: options.cwd,
-    biomeVersion: 'unknown',
+    biomeVersion: resolveLinterVersion(options.cwd, '@biomejs/biome'),
   });
 }

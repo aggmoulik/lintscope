@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { type EslintLintResult, mapEslintResults } from '../src/adapters/eslint';
+import { buildEslintArgs, type EslintLintResult, mapEslintResults } from '../src/adapters/eslint';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = JSON.parse(
@@ -96,5 +96,31 @@ describe('mapEslintResults', () => {
     expect(report.diagnostics).toEqual([]);
     expect(report.summary.fileCount).toBe(0);
     expect(report.summary.ruleFrequency).toEqual({});
+  });
+});
+
+describe('buildEslintArgs', () => {
+  it('always requests json format and tolerates unmatched patterns', () => {
+    const args = buildEslintArgs(['.']);
+    const fmt = args.indexOf('--format');
+    expect(fmt).toBeGreaterThan(-1);
+    expect(args[fmt + 1]).toBe('json');
+    expect(args).toContain('--no-error-on-unmatched-pattern');
+  });
+
+  it('passes --config when a configPath is given', () => {
+    const args = buildEslintArgs(['src'], '/repo/eslint.config.mjs');
+    const i = args.indexOf('--config');
+    expect(i).toBeGreaterThan(-1);
+    expect(args[i + 1]).toBe('/repo/eslint.config.mjs');
+  });
+
+  it('omits --config when no configPath is given', () => {
+    expect(buildEslintArgs(['.'])).not.toContain('--config');
+  });
+
+  it('appends all lint patterns last, in order', () => {
+    const args = buildEslintArgs(['src', 'test']);
+    expect(args.slice(-2)).toEqual(['src', 'test']);
   });
 });

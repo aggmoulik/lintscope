@@ -8,7 +8,6 @@ export default defineConfig({
   sourcemap: true,
   target: 'node20',
   external: [
-    'eslint',
     '@lintscope/api-schema',
     '@lintscope/core',
     '@lintscope/schema',

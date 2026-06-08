@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { runEslint } from '@lintscope/core';
+import { resolveLintScope, runLinter } from '@lintscope/core';
 import { createStudioServer, type StudioServerInstance } from '@lintscope/studio-server';
 import type { LintContext } from '../context';
 import { handleFileRequest } from '../handlers/file';
@@ -26,6 +26,11 @@ export interface StudioOptions {
   open?: boolean;
   /** Enable file-watcher → SSE push. Default false. */
   watch?: boolean;
+  /**
+   * Lint targets (positional CLI paths), relative to `cwd`. Scopes the file set
+   * to a sub-package while the linter config is still found by walking up.
+   */
+  targets?: string[];
 }
 
 const DEFAULT_HOSTED_UI = 'https://lintscope.dev/studio';
@@ -50,14 +55,26 @@ export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
     options.allowOrigin ?? process.env.LINTSCOPE_ALLOW_ORIGIN ?? new URL(hostedUi).origin;
   const watchEnabled = options.watch === true;
 
-  const initialReport = await runEslint({ cwd });
+  // Find the linter config (walking up from cwd) and scope the file set to any
+  // positional targets / the sub-package we're in. Throws a clear
+  // "No linter detected" error if no supported config is found.
+  const scope = resolveLintScope({
+    cwd,
+    ...(options.targets && options.targets.length > 0 ? { targets: options.targets } : {}),
+  });
+  const runOptions = {
+    cwd: scope.projectRoot,
+    linter: scope.linter,
+    ...(scope.patterns ? { patterns: scope.patterns } : {}),
+  };
+  const initialReport = await runLinter(runOptions);
 
   const context: LintContext = {
-    projectRoot: cwd,
+    projectRoot: scope.projectRoot,
     name: 'lintscope',
-    linter: 'eslint',
+    linter: scope.linter,
     report: initialReport,
-    rerun: () => runEslint({ cwd }),
+    rerun: () => runLinter(runOptions),
   };
 
   const studio = await createStudioServer({

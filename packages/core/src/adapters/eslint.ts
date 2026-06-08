@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import {
   type Diagnostic,
@@ -6,6 +7,7 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
+import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
 
 /**
  * Subset of the ESLint LintResult shape we depend on. Declared locally so
@@ -131,33 +133,106 @@ export function mapEslintResults(results: EslintLintResult[], ctx: MapEslintCont
 export interface RunEslintOptions {
   /** Project root. Used as ESLint cwd and to compute relative paths. */
   cwd: string;
-  /** Glob patterns to lint. Defaults to `['**\/*.{js,jsx,ts,tsx,mjs,cjs}']`. */
+  /** Lint patterns. Defaults to `['.']` so ESLint's own config drives the file set. */
   patterns?: string[];
   /** Optional explicit config file. If omitted, ESLint auto-detects. */
   configPath?: string;
+  /**
+   * Explicit eslint binary path (override). When omitted, the project-local
+   * `node_modules/.bin/eslint` is preferred, falling back to `eslint` on PATH.
+   */
+  binary?: string;
+}
+
+/** Build the `eslint` CLI args. Pure — exported for testing. */
+export function buildEslintArgs(patterns: string[], configPath?: string): string[] {
+  return [
+    '--format',
+    'json',
+    // Don't fail the whole run when a pattern matches nothing.
+    '--no-error-on-unmatched-pattern',
+    ...(configPath ? ['--config', configPath] : []),
+    ...patterns,
+  ];
 }
 
 /**
- * Run ESLint via its Node API and return a normalized LintReport.
+ * Run the project's own ESLint via its CLI (`eslint --format json`) and
+ * normalize the output into a LintReport.
  *
- * Requires `eslint` to be installed in the caller's project (declared as an
- * optional peer dependency so `@lintscope/core` itself stays lightweight).
+ * We spawn the resolved binary rather than `import('eslint')` so we run the
+ * version installed in the *target* project — `import` would resolve ESLint
+ * from `@lintscope/core`'s own dependency tree instead. The `--format json`
+ * output is the same `LintResult[]` shape the Node API returns, so
+ * `mapEslintResults` is reused unchanged.
  */
 export async function runEslint(options: RunEslintOptions): Promise<LintReport> {
-  const patterns = options.patterns ?? ['**/*.{js,jsx,ts,tsx,mjs,cjs}'];
-  // Dynamic import keeps ESLint as an optional peer.
-  const eslintModule = (await import('eslint')) as typeof import('eslint');
-  const eslint = new eslintModule.ESLint({
+  const patterns = options.patterns ?? ['.'];
+  const { command: binary, resolvedFrom } = resolveLinterBin({
+    projectRoot: options.cwd,
+    name: 'eslint',
+    ...(options.binary ? { override: options.binary } : {}),
+  });
+  const args = buildEslintArgs(patterns, options.configPath);
+
+  const child = spawn(binary, args, {
     cwd: options.cwd,
-    ...(options.configPath ? { overrideConfigFile: options.configPath } : {}),
-    fix: false,
-    errorOnUnmatchedPattern: false,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    // A local `.bin` shim on Windows is a `.cmd`, which Node refuses to spawn
+    // without a shell (CVE-2024-27980). PATH/override stay shell-free.
+    shell: resolvedFrom === 'local' && /\.(cmd|bat)$/i.test(binary),
   });
 
-  const results = await eslint.lintFiles(patterns);
-  return mapEslintResults(results as unknown as EslintLintResult[], {
+  const stdoutChunks: Buffer[] = [];
+  const stderrChunks: Buffer[] = [];
+  child.stdout?.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
+  child.stderr?.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+
+  let spawnError: NodeJS.ErrnoException | undefined;
+  child.on('error', (err) => {
+    spawnError = err as NodeJS.ErrnoException;
+  });
+
+  const exitCode: number | null = await new Promise((resolve) => {
+    child.once('close', resolve);
+  });
+
+  if (spawnError) {
+    if (spawnError.code === 'ENOENT') {
+      throw new Error(
+        `Could not find \`${binary}\`. Install ESLint (\`pnpm add -D eslint\`) or pass an explicit binary.`,
+      );
+    }
+    throw spawnError;
+  }
+
+  const stdout = Buffer.concat(stdoutChunks).toString('utf8');
+  const stderr = Buffer.concat(stderrChunks).toString('utf8');
+
+  // ESLint exits 1 when there are lint problems — that's normal. Exit ≥ 2 means
+  // a fatal error (bad config, crash, no config found).
+  if (exitCode !== null && exitCode > 1) {
+    throw new Error(
+      `eslint exited with code ${exitCode}: ${stderr.trim() || stdout.trim() || 'no output'}`,
+    );
+  }
+
+  if (!stdout.trim()) {
+    throw new Error(`eslint produced no stdout (stderr: ${stderr.trim() || 'empty'})`);
+  }
+
+  let results: EslintLintResult[];
+  try {
+    results = JSON.parse(stdout) as EslintLintResult[];
+  } catch (err) {
+    throw new Error(
+      `eslint --format json output was not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  return mapEslintResults(results, {
     cwd: options.cwd,
-    eslintVersion: eslintModule.ESLint.version,
+    eslintVersion: resolveLinterVersion(options.cwd, 'eslint'),
     ...(options.configPath ? { configPath: options.configPath } : {}),
   });
 }

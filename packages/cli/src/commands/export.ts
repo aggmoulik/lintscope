@@ -1,12 +1,14 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { runEslint } from '@lintscope/core';
+import { resolveLintScope, runLinter } from '@lintscope/core';
 import type { LintReport } from '@lintscope/schema';
 
 export interface ExportOptions {
   cwd: string;
   /** Output path. `'-'` (or omitted) prints to stdout. */
   out?: string;
+  /** Lint targets (positional CLI paths), relative to `cwd`. */
+  targets?: string[];
 }
 
 /**
@@ -18,7 +20,15 @@ export async function runExport(options: ExportOptions): Promise<{
   report: LintReport;
   writtenTo: 'stdout' | string;
 }> {
-  const report = await runEslint({ cwd: options.cwd });
+  const scope = resolveLintScope({
+    cwd: path.resolve(options.cwd),
+    ...(options.targets && options.targets.length > 0 ? { targets: options.targets } : {}),
+  });
+  const report = await runLinter({
+    cwd: scope.projectRoot,
+    linter: scope.linter,
+    ...(scope.patterns ? { patterns: scope.patterns } : {}),
+  });
   const json = `${JSON.stringify(report, null, 2)}\n`;
 
   if (!options.out || options.out === '-') {

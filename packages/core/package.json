@@ -46,18 +46,9 @@
   "dependencies": {
     "@lintscope/schema": "workspace:*"
   },
-  "peerDependencies": {
-    "eslint": ">=8.0.0"
-  },
-  "peerDependenciesMeta": {
-    "eslint": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@lintscope/tsconfig": "workspace:*",
     "@types/node": "25.9.1",
-    "eslint": "10.4.0",
     "tsup": "8.5.1",
     "typescript": "6.0.3",
     "vitest": "4.1.7"

@@ -33,3 +33,21 @@ export {
   detectLinter,
   detectOxcConfig,
 } from './detect-config';
+export {
+  type ResolvedLinterBin,
+  type ResolveLinterBinDeps,
+  type ResolveLinterBinOptions,
+  type ResolveLinterVersionDeps,
+  resolveLinterBin,
+  resolveLinterVersion,
+} from './resolve-bin';
+export {
+  type LinterName,
+  type ResolvedLinterChoice,
+  type ResolvedLintScope,
+  type ResolveLintScopeOptions,
+  type RunLinterOptions,
+  resolveLinterChoice,
+  resolveLintScope,
+  runLinter,
+} from './run-linter';

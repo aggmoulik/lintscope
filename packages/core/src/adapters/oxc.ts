@@ -7,6 +7,7 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
+import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
 
 /**
  * Structural type for the subset of `oxlint --format=json` we depend on.
@@ -209,7 +210,10 @@ export interface RunOxcOptions {
   cwd: string;
   /** Globs / paths to lint. Defaults to `['.']`. */
   patterns?: string[];
-  /** Optional explicit oxlint binary path. Defaults to `oxlint` on PATH. */
+  /**
+   * Explicit oxlint binary path (override). When omitted, the project-local
+   * `node_modules/.bin/oxlint` is preferred, falling back to `oxlint` on PATH.
+   */
   binary?: string;
 }
 
@@ -220,12 +224,21 @@ export interface RunOxcOptions {
  */
 export async function runOxc(options: RunOxcOptions): Promise<LintReport> {
   const patterns = options.patterns ?? ['.'];
-  const binary = options.binary ?? 'oxlint';
+  const { command: binary, resolvedFrom } = resolveLinterBin({
+    projectRoot: options.cwd,
+    name: 'oxlint',
+    ...(options.binary ? { override: options.binary } : {}),
+  });
   const args = ['--format=json', ...patterns];
 
   const child = spawn(binary, args, {
     cwd: options.cwd,
     stdio: ['ignore', 'pipe', 'pipe'],
+    // A local `.bin` shim on Windows is a `.cmd`, which Node refuses to spawn
+    // without a shell (CVE-2024-27980). PATH/override stay shell-free.
+    // NOTE: shell mode doesn't quote a binary path containing spaces — tracked
+    // as a Phase D Windows follow-up (adopt cross-spawn if it bites).
+    shell: resolvedFrom === 'local' && /\.(cmd|bat)$/i.test(binary),
   });
 
   const stdoutChunks: Buffer[] = [];
@@ -276,6 +289,6 @@ export async function runOxc(options: RunOxcOptions): Promise<LintReport> {
 
   return mapOxcResults(payload, {
     cwd: options.cwd,
-    oxcVersion: 'unknown',
+    oxcVersion: resolveLinterVersion(options.cwd, 'oxlint'),
   });
 }

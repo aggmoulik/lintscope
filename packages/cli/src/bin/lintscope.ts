@@ -27,7 +27,11 @@ interface ScanCliOptions {
 
 const DEV_HOSTED_UI = 'http://localhost:3000/studio';
 
-async function launchStudio(opts: ScanCliOptions, label = 'scan'): Promise<void> {
+async function launchStudio(
+  opts: ScanCliOptions,
+  targets: string[],
+  label = 'scan',
+): Promise<void> {
   // --dev fills in the hosted-ui default if the user hasn't set one explicitly.
   const resolvedHostedUi = opts.hostedUi ?? (opts.dev ? DEV_HOSTED_UI : undefined);
 
@@ -38,6 +42,7 @@ async function launchStudio(opts: ScanCliOptions, label = 'scan'): Promise<void>
     ...(typeof opts.port === 'number' ? { port: opts.port } : {}),
     ...(opts.open === false ? { open: false } : {}),
     ...(opts.watch === true ? { watch: true } : {}),
+    ...(targets.length > 0 ? { targets } : {}),
   };
   const handle: StudioHandle = await runStudio(studioOptions);
   const watching = handle.watcher !== undefined;
@@ -77,26 +82,32 @@ function applyStudioFlags(cmd: Command, includeWatch: boolean): Command {
 }
 
 // `scan` is the default — lint the project and open the dashboard.
+// Optional `[paths...]` scope the file set to a sub-package (the linter config
+// is still found by walking up to the repo root).
 applyStudioFlags(
   program
-    .command('scan', { isDefault: true })
-    .description('Lint the project and open the dashboard'),
+    .command('scan [paths...]', { isDefault: true })
+    .description('Lint the project (or given paths) and open the dashboard'),
   /* includeWatch */ true,
-).action((opts: ScanCliOptions) => launchStudio(opts, 'scan'));
+).action((paths: string[], opts: ScanCliOptions) => launchStudio(opts, paths, 'scan'));
 
 // `studio` is the explicit alias most close to the conceptual name.
 applyStudioFlags(
   program
-    .command('studio')
-    .description('Alias for `scan` — lint the project and open the dashboard'),
+    .command('studio [paths...]')
+    .description('Alias for `scan` — lint the project (or given paths) and open the dashboard'),
   /* includeWatch */ true,
-).action((opts: ScanCliOptions) => launchStudio(opts, 'studio'));
+).action((paths: string[], opts: ScanCliOptions) => launchStudio(opts, paths, 'studio'));
 
 // `watch` is the shortcut for `scan --watch`.
 applyStudioFlags(
-  program.command('watch').description('Lint + watch files for changes; pushes updates over SSE'),
+  program
+    .command('watch [paths...]')
+    .description('Lint + watch files (or given paths); pushes updates over SSE'),
   /* includeWatch */ false,
-).action((opts: Omit<ScanCliOptions, 'watch'>) => launchStudio({ ...opts, watch: true }, 'watch'));
+).action((paths: string[], opts: Omit<ScanCliOptions, 'watch'>) =>
+  launchStudio({ ...opts, watch: true }, paths, 'watch'),
+);
 
 // `view` — render existing linter JSON in the studio; never spawns a linter.
 interface ViewCliOptions {
@@ -165,17 +176,18 @@ program
 
 // `export` is non-interactive — emit JSON for CI / piping.
 program
-  .command('export')
+  .command('export [paths...]')
   .description('Run the linter once and emit a LintReport JSON (no browser, no server)')
   .option('-f, --format <format>', "output format — only 'json' is supported in v1", 'json')
   .option('-o, --out <path>', 'write the report to this file instead of stdout')
-  .action(async (opts: { format?: string; out?: string }) => {
+  .action(async (paths: string[], opts: { format?: string; out?: string }) => {
     if (opts.format && opts.format !== 'json') {
       throw new Error(`Unsupported --format: ${opts.format}. Only 'json' is supported in v1.`);
     }
     const result = await runExport({
       cwd: process.cwd(),
       ...(opts.out ? { out: opts.out } : {}),
+      ...(paths.length > 0 ? { targets: paths } : {}),
     });
     if (result.writtenTo !== 'stdout') {
       console.error(`✓ wrote ${result.writtenTo}`);
