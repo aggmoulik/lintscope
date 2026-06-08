@@ -1,0 +1,13 @@
+# Build artifacts and dependencies — Vercel reinstalls + rebuilds these.
+# (gitignore syntax: bare names match at every directory level)
+node_modules
+.next
+.turbo
+dist
+out
+*.tsbuildinfo
+
+# VCS and local-only
+.git
+.github
+docs
