@@ -114,6 +114,7 @@ function byRelativePath(files: FileEntry[]): Map<string, FileEntry> {
   return m;
 }
 
+/** File rows show the actual issue/warning counts. */
 function CountBadges({
   errorCount,
   warningCount,
@@ -140,6 +141,42 @@ function CountBadges({
   );
 }
 
+/**
+ * Folder rows show only color dots — red if any nested errors, amber if any
+ * nested warnings — to keep deep paths readable. The rolled-up counts stay in
+ * the DOM as screen-reader-only text for accessibility.
+ */
+function FolderIndicator({
+  errorCount,
+  warningCount,
+}: {
+  errorCount: number;
+  warningCount: number;
+}) {
+  if (errorCount === 0 && warningCount === 0) return null;
+  return (
+    <span className="flex items-center gap-1">
+      {errorCount > 0 && (
+        <span
+          data-severity="error"
+          aria-hidden
+          className="h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400"
+        />
+      )}
+      {warningCount > 0 && (
+        <span
+          data-severity="warning"
+          aria-hidden
+          className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400"
+        />
+      )}
+      <span className="sr-only">
+        {errorCount} errors, {warningCount} warnings
+      </span>
+    </span>
+  );
+}
+
 function renderNodes(
   nodes: Array<FolderNode | FileNode>,
   selectedPath: string | undefined,
@@ -150,7 +187,7 @@ function renderNodes(
         key={`folder:${node.relativePath}`}
         id={node.relativePath}
         label={node.name}
-        trailing={<CountBadges errorCount={node.errorCount} warningCount={node.warningCount} />}
+        trailing={<FolderIndicator errorCount={node.errorCount} warningCount={node.warningCount} />}
       >
         {renderNodes(node.children, selectedPath)}
       </Folder>

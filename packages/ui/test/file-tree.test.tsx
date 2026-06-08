@@ -38,12 +38,24 @@ describe('<FileTree />', () => {
     expect(buttons.some((b) => b.textContent?.includes('readme.md'))).toBe(true);
   });
 
-  it('rolls up error and warning counts into parent folders', () => {
+  it('rolls up counts into parent folders, shown as color dots (not numbers)', () => {
     render(<FileTree files={sample} />);
-    // The `src` folder aggregates: 1+0+3 = 4 errors · 0+2+1 = 3 warnings.
     const srcButton = screen.getByText('src').closest('button');
+    // Folders show only color dots: red (errors present) + amber (warnings present).
+    expect(srcButton?.querySelector('[data-severity="error"]')).not.toBeNull();
+    expect(srcButton?.querySelector('[data-severity="warning"]')).not.toBeNull();
+    // The rolled-up counts (1+0+3 = 4 errors · 0+2+1 = 3 warnings) stay in the DOM
+    // as screen-reader-only text for accessibility.
     expect(srcButton?.textContent).toContain('4');
     expect(srcButton?.textContent).toContain('3');
+  });
+
+  it('shows numeric counts on file rows (not dots)', () => {
+    render(<FileTree files={sample} />);
+    const fooRow = screen.getByText('foo.ts').closest('button');
+    // foo.ts has 1 error, 0 warnings → numeric badge, no severity dots.
+    expect(fooRow?.querySelector('[data-severity]')).toBeNull();
+    expect(fooRow?.textContent).toContain('1');
   });
 
   it('expands all folders by default so every file is visible on first render', () => {

@@ -67,6 +67,25 @@ describe('mapOxcResults', () => {
     expect(debugger1?.endColumn).toBe(12);
   });
 
+  it('reads line/column nested inside label.span (oxlint 1.x format)', () => {
+    // Real oxlint 1.66.0 nests line/column INSIDE `labels[0].span`, not at the
+    // label top level. Captured from `oxlint --format=json` on a real project.
+    const synthetic: OxcReport = {
+      diagnostics: [
+        {
+          severity: 'warning',
+          code: 'eslint(no-constant-binary-expression)',
+          message: 'Unexpected constant nullishness',
+          filename: 'src/form.tsx',
+          labels: [{ span: { offset: 4482, length: 33, line: 159, column: 37 } }],
+        },
+      ],
+    };
+    const report = mapOxcResults(synthetic, ctx);
+    expect(report.diagnostics[0]?.line).toBe(159);
+    expect(report.diagnostics[0]?.column).toBe(37);
+  });
+
   it('falls back to line/column 1/1 when labels are missing (advice diagnostics)', () => {
     const report = mapOxcResults(FIXTURE, ctx);
     const advice = report.diagnostics.find((d) => d.ruleId === 'eslint/prefer-const');

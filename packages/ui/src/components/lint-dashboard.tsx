@@ -90,7 +90,7 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
         onClearAll={() => setFilters(EMPTY_FILTERS)}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
         <aside className="flex flex-col gap-4">
           <FileTree
             files={report.files}

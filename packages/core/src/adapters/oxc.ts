@@ -24,7 +24,18 @@ import {
  */
 export interface OxcLabel {
   message?: string;
-  span?: { offset?: number; length?: number };
+  /**
+   * oxlint 1.x nests line/column INSIDE `span` (alongside the byte offset);
+   * older releases put them at the label top level. We read both.
+   */
+  span?: {
+    offset?: number;
+    length?: number;
+    line?: number;
+    column?: number;
+    end_line?: number;
+    end_column?: number;
+  };
   line?: number;
   column?: number;
   end_line?: number;
@@ -84,13 +95,21 @@ function extractPosition(d: OxcDiagnostic): {
   endColumn?: number;
 } {
   const label = d.labels?.[0];
-  if (label && typeof label.line === 'number' && typeof label.column === 'number') {
+  if (!label) return { line: 1, column: 1 };
+
+  // Top-level line/column (older oxlint) take precedence; fall back to the
+  // values nested inside `span` (oxlint 1.x). Either may be absent.
+  const line = label.line ?? label.span?.line;
+  const column = label.column ?? label.span?.column;
+  if (typeof line === 'number' && typeof column === 'number') {
     const result: { line: number; column: number; endLine?: number; endColumn?: number } = {
-      line: label.line,
-      column: label.column,
+      line,
+      column,
     };
-    if (typeof label.end_line === 'number') result.endLine = label.end_line;
-    if (typeof label.end_column === 'number') result.endColumn = label.end_column;
+    const endLine = label.end_line ?? label.span?.end_line;
+    const endColumn = label.end_column ?? label.span?.end_column;
+    if (typeof endLine === 'number') result.endLine = endLine;
+    if (typeof endColumn === 'number') result.endColumn = endColumn;
     return result;
   }
   return { line: 1, column: 1 };
