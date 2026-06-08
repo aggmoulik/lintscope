@@ -1,5 +1,7 @@
 import {
   FileResponseSchema,
+  type HandshakeResponse,
+  HandshakeResponseSchema,
   HTTP_ENDPOINTS,
   type InitResponse,
   InitResponseSchema,
@@ -9,7 +11,7 @@ import {
   ScanResponseSchema,
 } from '@lintscope/api-schema';
 import type { z } from 'zod';
-import type { StudioConnection } from './connection';
+import type { StudioConnection, StudioTarget } from './connection';
 
 /** Thrown when the server returned 401 — wrong token or token omitted. */
 export class StudioAuthError extends Error {
@@ -114,6 +116,47 @@ async function authedFetch<T>(
 }
 
 export const studioApi = {
+  /**
+   * Fetch the session token from the local server. Unauthenticated by design —
+   * the server origin- and CORS-gates it, so only this hosted origin can read
+   * the response. A 401/403 here means the server didn't recognize our origin.
+   */
+  async handshake(target: StudioTarget): Promise<HandshakeResponse> {
+    const base = `http://${target.host}:${target.port}`;
+    let res: Response;
+    try {
+      res = await fetch(`${base}${HTTP_ENDPOINTS.handshake.path}`, {
+        method: HTTP_ENDPOINTS.handshake.method,
+        cache: 'no-store',
+        // Bound each probe so one hung candidate port can't stall discovery.
+        signal: AbortSignal.timeout(2500),
+      });
+    } catch (err) {
+      throw new StudioConnectionError(
+        `Could not reach studio server at ${base} — is the CLI still running?`,
+        err,
+      );
+    }
+    if (res.status === 401 || res.status === 403) throw new StudioAuthError();
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new StudioHttpError(res.status, text || res.statusText);
+    }
+    let json: unknown;
+    try {
+      json = await res.json();
+    } catch (err) {
+      throw new StudioConnectionError('Studio server returned non-JSON on /handshake', err);
+    }
+    const parsed = HandshakeResponseSchema.safeParse(json);
+    if (!parsed.success) {
+      throw new StudioSchemaError(
+        HTTP_ENDPOINTS.handshake.path,
+        parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; '),
+      );
+    }
+    return parsed.data;
+  },
   init(connection: StudioConnection): Promise<InitResponse> {
     return authedFetch(connection, HTTP_ENDPOINTS.init, InitResponseSchema);
   },

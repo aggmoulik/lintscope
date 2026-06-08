@@ -1,6 +1,35 @@
+import { createServer, request as httpRequest } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createStudioServer } from '../src/server';
+import { createStudioServer, isLoopbackHost } from '../src/server';
 import type { StudioServerInstance } from '../src/types';
+
+/** Raw GET that lets us set a custom Host header (fetch forbids it). */
+function rawGet(
+  port: number,
+  path: string,
+  headers: Record<string, string>,
+): Promise<{ status: number }> {
+  return new Promise((resolve, reject) => {
+    const req = httpRequest({ host: '127.0.0.1', port, path, method: 'GET', headers }, (res) => {
+      res.resume();
+      res.on('end', () => resolve({ status: res.statusCode ?? 0 }));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/** Grab a currently-free port (bind to 0, read it, release it). */
+function freePort(): Promise<number> {
+  return new Promise((resolve) => {
+    const s = createServer();
+    s.listen(0, '127.0.0.1', () => {
+      const p = (s.address() as AddressInfo).port;
+      s.close(() => resolve(p));
+    });
+  });
+}
 
 async function withStudio<T>(
   opts: Omit<Parameters<typeof createStudioServer>[0], 'name' | 'hostedUi' | 'open'> & {
@@ -22,8 +51,22 @@ async function withStudio<T>(
   }
 }
 
+describe('isLoopbackHost', () => {
+  it('accepts loopback hosts and rejects everything else', () => {
+    expect(isLoopbackHost('localhost:5174')).toBe(true);
+    expect(isLoopbackHost('localhost')).toBe(true);
+    expect(isLoopbackHost('127.0.0.1:5174')).toBe(true);
+    expect(isLoopbackHost('127.0.0.5')).toBe(true);
+    expect(isLoopbackHost('[::1]:5174')).toBe(true);
+    expect(isLoopbackHost('evil.com')).toBe(false);
+    expect(isLoopbackHost('attacker.com:5174')).toBe(false);
+    expect(isLoopbackHost('169.254.169.254')).toBe(false);
+    expect(isLoopbackHost('')).toBe(false);
+  });
+});
+
 describe('createStudioServer', () => {
-  it('listens on a random port and returns a fully-qualified hosted UI URL', async () => {
+  it('returns a hosted UI URL with host+port but no token/name (random port)', async () => {
     await withStudio(
       {
         allowOrigin: 'https://example.dev',
@@ -36,9 +79,131 @@ describe('createStudioServer', () => {
         expect(u.pathname).toBe('/studio');
         expect(u.searchParams.get('host')).toBe('localhost');
         expect(u.searchParams.get('port')).toBe(String(studio.port));
-        expect(u.searchParams.get('token')).toBe(studio.token);
-        expect(u.searchParams.get('name')).toBe('test-studio');
+        // token comes from /handshake; name comes from /handshake — neither in the URL.
+        expect(u.searchParams.get('token')).toBeNull();
+        expect(u.searchParams.get('name')).toBeNull();
         return Promise.resolve();
+      },
+    );
+  });
+
+  it('binds a candidate from a port list and returns a fully bare URL (discoverable)', async () => {
+    const p = await freePort();
+    await withStudio(
+      {
+        port: [p],
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      (studio) => {
+        expect(studio.port).toBe(p);
+        // Discoverable + name/token off the URL → exactly `…/studio`, no query.
+        expect(studio.url).toBe('https://example.dev/studio');
+        expect(new URL(studio.url).search).toBe('');
+        return Promise.resolve();
+      },
+    );
+  });
+
+  it('keeps host+port in the URL for an explicit numeric port (not discoverable)', async () => {
+    const p = await freePort();
+    await withStudio(
+      {
+        port: p,
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      (studio) => {
+        expect(studio.port).toBe(p);
+        const u = new URL(studio.url);
+        expect(u.searchParams.get('host')).toBe('localhost');
+        expect(u.searchParams.get('port')).toBe(String(p));
+        return Promise.resolve();
+      },
+    );
+  });
+
+  it('serves GET /handshake WITHOUT a token, returning the session token + name', async () => {
+    await withStudio(
+      {
+        name: 'hs-studio',
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      async (studio) => {
+        // No token, no Origin (e.g. same-machine fetch) → served.
+        const res = await fetch(`http://127.0.0.1:${studio.port}/handshake`);
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({ token: studio.token, name: 'hs-studio' });
+      },
+    );
+  });
+
+  it('handshake from the ALLOWED origin returns the CORS header (only that origin can read it)', async () => {
+    await withStudio(
+      {
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      async (studio) => {
+        const res = await fetch(`http://127.0.0.1:${studio.port}/handshake`, {
+          headers: { Origin: 'https://example.dev' },
+        });
+        expect(res.status).toBe(200);
+        expect(res.headers.get('access-control-allow-origin')).toBe('https://example.dev');
+        expect((await res.json()).token).toBe(studio.token);
+      },
+    );
+  });
+
+  it('rejects a non-loopback Host header (DNS-rebinding guard) with 403', async () => {
+    await withStudio(
+      {
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      async (studio) => {
+        // A rebinding attack arrives with the attacker's domain as Host.
+        const evil = await rawGet(studio.port, '/handshake', { Host: 'evil.com' });
+        expect(evil.status).toBe(403);
+        // A genuine loopback Host is served.
+        const ok = await rawGet(studio.port, '/handshake', { Host: `127.0.0.1:${studio.port}` });
+        expect(ok.status).toBe(200);
+      },
+    );
+  });
+
+  it('answers a Private Network Access preflight with Allow-Private-Network', async () => {
+    await withStudio(
+      {
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      async (studio) => {
+        const res = await fetch(`http://127.0.0.1:${studio.port}/handshake`, {
+          method: 'OPTIONS',
+          headers: {
+            Origin: 'https://example.dev',
+            'Access-Control-Request-Private-Network': 'true',
+          },
+        });
+        expect(res.status).toBe(204);
+        expect(res.headers.get('access-control-allow-private-network')).toBe('true');
+      },
+    );
+  });
+
+  it('rejects GET /handshake from a DISALLOWED origin with 403 (no token leak)', async () => {
+    await withStudio(
+      {
+        allowOrigin: 'https://example.dev',
+        endpoints: { 'GET /init': () => ({ body: {} }) },
+      },
+      async (studio) => {
+        const res = await fetch(`http://127.0.0.1:${studio.port}/handshake`, {
+          headers: { Origin: 'https://evil.example' },
+        });
+        expect(res.status).toBe(403);
       },
     );
   });

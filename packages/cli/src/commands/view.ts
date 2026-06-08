@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { STUDIO_DISCOVERY_PORTS } from '@lintscope/api-schema';
 import { createStudioServer, type StudioServerInstance } from '@lintscope/studio-server';
 import type { LintContext } from '../context';
 import { handleFileRequest } from '../handlers/file';
@@ -21,7 +22,9 @@ export interface ViewOptions {
   open?: boolean;
 }
 
-const DEFAULT_HOSTED_UI = 'https://lintscope.dev/studio';
+// Default hosted UI. TODO: swap to https://lintscope.dev/studio once the custom
+// domain is attached to this Vercel project.
+const DEFAULT_HOSTED_UI = 'https://registry-seven-khaki.vercel.app/studio';
 
 export interface ViewHandle {
   studio: StudioServerInstance;
@@ -56,7 +59,8 @@ export async function runView(options: ViewOptions): Promise<ViewHandle> {
     hostedUi,
     allowOrigin,
     open: options.open ?? true,
-    ...(options.port !== undefined ? { port: options.port } : {}),
+    // No --port → discovery-range port, kept out of the URL (page probes for it).
+    port: options.port ?? [...STUDIO_DISCOVERY_PORTS],
     endpoints: {
       'GET /init': () => ({
         body: buildInitPayload(context, {

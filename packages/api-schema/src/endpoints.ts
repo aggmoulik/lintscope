@@ -8,12 +8,30 @@ import { API_VERSION } from './version';
  * these constants so a typo in one place fails at compile time.
  */
 export const HTTP_ENDPOINTS = {
+  /** Unauthenticated, CORS-gated: the hosted UI fetches the session token here. */
+  handshake: { method: 'GET', path: '/handshake' },
   init: { method: 'GET', path: '/init' },
   report: { method: 'GET', path: '/report' },
   file: { method: 'GET', path: '/file' },
   scan: { method: 'POST', path: '/scan' },
   events: { method: 'GET', path: '/events' },
 } as const;
+
+/* ---------- GET /handshake ---------- */
+
+/** UUID v4 — the shape of the per-session token. */
+const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/**
+ * `GET /handshake` returns the session token (and name) so it never has to
+ * travel in the studio URL. The endpoint is unauthenticated but origin- and
+ * CORS-gated by `studio-server`, so only the genuine hosted UI can read it.
+ */
+export const HandshakeResponseSchema = z.object({
+  token: z.string().regex(UUID_V4, 'token must be a UUID v4'),
+  name: z.string().min(1),
+});
+export type HandshakeResponse = z.infer<typeof HandshakeResponseSchema>;
 
 /* ---------- GET /init ---------- */
 

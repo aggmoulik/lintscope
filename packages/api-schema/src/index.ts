@@ -1,4 +1,9 @@
 export {
+  STUDIO_DISCOVERY_PORTS,
+  STUDIO_PORT_BASE,
+  STUDIO_PORT_COUNT,
+} from './discovery';
+export {
   type Capabilities,
   CapabilitiesSchema,
   type ErrorResponse,
@@ -7,6 +12,8 @@ export {
   FileQuerySchema,
   type FileResponse,
   FileResponseSchema,
+  type HandshakeResponse,
+  HandshakeResponseSchema,
   HTTP_ENDPOINTS,
   type InitResponse,
   InitResponseSchema,

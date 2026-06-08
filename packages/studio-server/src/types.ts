@@ -48,13 +48,20 @@ export interface CreateStudioServerOptions {
    */
   name: string;
   /**
-   * The hosted UI URL (e.g. `https://lintscope.dev/studio`). The framework
-   * appends `?host=&port=&token=&name=` query parameters to this when building
-   * the URL it tells you to open.
+   * The hosted UI URL (e.g. `https://lintscope.dev/studio`). For a discovery
+   * port the framework leaves it bare (`…/studio`); for an explicit/random port
+   * it appends `?host=&port=`. The token and name are never in the URL — the
+   * page fetches both via `GET /handshake`.
    */
   hostedUi: string;
-  /** Port to listen on. `0` (default) selects a random free port. */
-  port?: number;
+  /**
+   * Port to listen on:
+   *  - a single `number` binds exactly that port (and puts host+port in the URL);
+   *  - a `number[]` binds the first free candidate and OMITS host+port from the
+   *    URL, expecting the page to probe the range (Drizzle-style clean URL);
+   *  - omitted selects a random free port (host+port included in the URL).
+   */
+  port?: number | number[];
   /**
    * Allowed CORS origins. The wildcard `*` is rejected. Required — no insecure
    * default.
@@ -74,11 +81,11 @@ export interface CreateStudioServerOptions {
 }
 
 export interface StudioServerInstance {
-  /** Fully built URL (`https://lintscope.dev/studio?host=localhost&port=...&token=...&name=lintscope`). */
+  /** Built URL — bare `…/studio` for a discovery port, else `…/studio?host=&port=`. No token/name. */
   url: string;
   /** Port the local HTTP server is bound to. */
   port: number;
-  /** Per-session token. Also embedded in `url`. */
+  /** Per-session token. Served to the hosted UI via `GET /handshake`, not via `url`. */
   token: string;
   /** Push an SSE event to all currently-subscribed channels. */
   broadcast(eventName: string, data: unknown): void;

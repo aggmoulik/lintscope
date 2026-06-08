@@ -43,14 +43,19 @@ export async function createStudioServer(
   const studioHost = options.studioHost ?? 'localhost';
 
   const server = createServer((req, res) => handle(req, res));
-  await listen(server, options.port ?? 0);
-  const port = (server.address() as AddressInfo).port;
+  const { port, discoverable } = await bindServer(server, options.port);
 
   const hostedUiUrl = new URL(options.hostedUi);
-  hostedUiUrl.searchParams.set('host', studioHost);
-  hostedUiUrl.searchParams.set('port', String(port));
-  hostedUiUrl.searchParams.set('token', token);
-  hostedUiUrl.searchParams.set('name', options.name);
+  // When the port came from a discovery list the page can probe for it, so we
+  // omit host+port for a clean URL. An explicit/fallback port the page can't
+  // guess is included so it can still connect.
+  if (!discoverable) {
+    hostedUiUrl.searchParams.set('host', studioHost);
+    hostedUiUrl.searchParams.set('port', String(port));
+  }
+  // Neither the token nor the name is in the URL — the page fetches both via
+  // GET /handshake (origin- and CORS-gated below). For a discovery-range port
+  // this leaves a fully bare `…/studio`, like Drizzle Studio.
   const url = hostedUiUrl.toString();
 
   if (options.open !== false) {
@@ -73,9 +78,26 @@ export async function createStudioServer(
     const origin = (req.headers.origin as string | undefined) ?? undefined;
     const cors = buildCorsHeaders({ origin, allowed: allowedOrigins });
 
+    // DNS-rebinding guard: only serve requests addressed to a loopback Host. A
+    // rebinding attack reaches 127.0.0.1 with the attacker's domain as Host and
+    // omits the Origin header (same-origin from the browser's view), which would
+    // otherwise slip past the origin check below.
+    if (!isLoopbackHost(req.headers.host ?? '')) {
+      res.writeHead(403, cors);
+      res.end();
+      return;
+    }
+
     if (req.method === 'OPTIONS') {
-      // Preflight — short-circuit
-      res.writeHead(cors['Access-Control-Allow-Origin'] ? 204 : 403, cors);
+      // Preflight — short-circuit. A public HTTPS page (the hosted UI) calling
+      // http://127.0.0.1 triggers a Private Network Access preflight in
+      // Chromium; answer it so the real request isn't blocked.
+      const allowed = Boolean(cors['Access-Control-Allow-Origin']);
+      const headers: Record<string, string> = { ...cors };
+      if (allowed && req.headers['access-control-request-private-network'] === 'true') {
+        headers['Access-Control-Allow-Private-Network'] = 'true';
+      }
+      res.writeHead(allowed ? 204 : 403, headers);
       res.end();
       return;
     }
@@ -91,6 +113,16 @@ export async function createStudioServer(
 
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
     const method = (req.method ?? 'GET').toUpperCase() as HttpMethod;
+
+    // Built-in handshake: lets the hosted UI fetch the session token so it never
+    // has to live in the URL. Deliberately EXEMPT from the token check (it's how
+    // you obtain the token) — but it's already origin-gated above (disallowed
+    // origins got 403) and the response carries the allow-origin CORS header, so
+    // only the genuine hosted UI can read the token back.
+    if (method === 'GET' && url.pathname === '/handshake') {
+      writeResponse(res, cors, { body: { token, name: options.name } });
+      return;
+    }
 
     // Auth check: token via ?token= OR Authorization: Bearer
     const presented = extractToken(url, req);
@@ -167,6 +199,24 @@ export async function createStudioServer(
   };
 }
 
+/**
+ * True only when `host` (a `Host` header, possibly with a port) addresses the
+ * loopback interface: `localhost`, `127.0.0.0/8`, or `::1`. Used as the
+ * DNS-rebinding guard — anything else (e.g. `evil.com`) is rejected.
+ */
+export function isLoopbackHost(host: string): boolean {
+  if (!host) return false;
+  // Strip a trailing `:port`, but not the colons inside an IPv6 literal `[::1]`.
+  let hostname = host;
+  const lastColon = host.lastIndexOf(':');
+  if (lastColon > host.lastIndexOf(']')) {
+    hostname = host.slice(0, lastColon);
+  }
+  hostname = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  if (hostname === 'localhost' || hostname === '::1') return true;
+  return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+}
+
 function compileRoutes(
   endpoints: CreateStudioServerOptions['endpoints'],
 ): Map<EndpointSpec, EndpointHandler> {
@@ -182,7 +232,47 @@ function compileRoutes(
   return map;
 }
 
-function listen(server: Server, port: number): Promise<void> {
+/**
+ * Bind the server. A `number[]` is a discovery list — try each, bind the first
+ * free one (`discoverable: true`, so the URL omits host+port). A single number
+ * or `undefined` binds exactly / randomly (`discoverable: false`). If every
+ * candidate in a list is busy, fall back to a random free port.
+ */
+async function bindServer(
+  server: Server,
+  port: number | number[] | undefined,
+): Promise<{ port: number; discoverable: boolean }> {
+  if (Array.isArray(port)) {
+    for (const candidate of port) {
+      if (await tryListen(server, candidate)) {
+        return { port: candidate, discoverable: true };
+      }
+    }
+    await forceListen(server, 0);
+    return { port: (server.address() as AddressInfo).port, discoverable: false };
+  }
+  await forceListen(server, port ?? 0);
+  return { port: (server.address() as AddressInfo).port, discoverable: false };
+}
+
+/** Attempt to listen on `port`; resolve true on success, false on any bind error. */
+function tryListen(server: Server, port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const onError = () => {
+      server.off('listening', onListening);
+      resolve(false);
+    };
+    const onListening = () => {
+      server.off('error', onError);
+      resolve(true);
+    };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port, '127.0.0.1');
+  });
+}
+
+function forceListen(server: Server, port: number): Promise<void> {
   return new Promise((resolve, reject) => {
     const onError = (err: Error) => reject(err);
     server.once('error', onError);

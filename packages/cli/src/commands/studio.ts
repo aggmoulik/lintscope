@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { STUDIO_DISCOVERY_PORTS } from '@lintscope/api-schema';
 import { resolveLintScope, runLinter } from '@lintscope/core';
 import { createStudioServer, type StudioServerInstance } from '@lintscope/studio-server';
 import type { LintContext } from '../context';
@@ -33,7 +34,9 @@ export interface StudioOptions {
   targets?: string[];
 }
 
-const DEFAULT_HOSTED_UI = 'https://lintscope.dev/studio';
+// Default hosted UI. TODO: swap to https://lintscope.dev/studio once the custom
+// domain is attached to this Vercel project.
+const DEFAULT_HOSTED_UI = 'https://registry-seven-khaki.vercel.app/studio';
 
 export interface StudioHandle {
   studio: StudioServerInstance;
@@ -82,7 +85,9 @@ export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
     hostedUi,
     allowOrigin,
     open: options.open ?? true,
-    ...(options.port !== undefined ? { port: options.port } : {}),
+    // No --port → bind a discovery-range port and keep it out of the URL (the
+    // page probes for it). An explicit --port is used verbatim and stays in the URL.
+    port: options.port ?? [...STUDIO_DISCOVERY_PORTS],
     endpoints: {
       'GET /init': () => ({
         body: buildInitPayload(context, {

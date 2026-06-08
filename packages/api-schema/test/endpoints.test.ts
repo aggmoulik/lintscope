@@ -13,8 +13,9 @@ import {
 import { API_VERSION } from '../src/version';
 
 describe('HTTP_ENDPOINTS constants', () => {
-  it('lists all five endpoints with the expected method+path pairs', () => {
+  it('lists all endpoints with the expected method+path pairs', () => {
     expect(HTTP_ENDPOINTS).toEqual({
+      handshake: { method: 'GET', path: '/handshake' },
       init: { method: 'GET', path: '/init' },
       report: { method: 'GET', path: '/report' },
       file: { method: 'GET', path: '/file' },
