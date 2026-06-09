@@ -1,0 +1,8 @@
+{ "diagnostics": [{"message": "Unexpected control characters","code": "eslint(no-control-regex)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-control-regex.html","help": "Avoid matching control characters in regular expressions. If intentional, consider using a Unicode escape instead.","filename": "apps/status-page/src/lib/proxy/sanitize-redirect-param.ts","labels": [{"label": "'U+0000' is a control character.","span": {"offset": 997,"length": 4,"line": 21,"column": 11}},{"label": "'U+001F' is a control character.","span": {"offset": 1002,"length": 4,"line": 21,"column": 16}}],"related": []},
+{"message": "Do not use `new Array(singleArgument)`.","code": "unicorn(no-new-array)","severity": "warning","causes": [],"url": "https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-new-array.html","help": "It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.","filename": "apps/status-page/src/components/ui/data-table/data-table-skeleton.tsx","labels": [{"span": {"offset": 1151,"length": 15,"line": 42,"column": 10}}],"related": []}],
+              "number_of_files": 180,
+              "number_of_rules": 95,
+              "threads_count": 4,
+              "start_time": 0.024783706
+            }
+            

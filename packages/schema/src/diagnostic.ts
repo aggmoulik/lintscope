@@ -40,5 +40,12 @@ export const DiagnosticSchema = z.object({
   url: z.url().optional(),
   fix: FixSchema.optional(),
   suggestions: z.array(SuggestionSchema).optional(),
+  /**
+   * Whether the linter reports this diagnostic as auto-fixable. Set only when
+   * the linter's output tells us (ESLint inline `fix`, Biome `fixable` tag).
+   * `undefined` means unknown — e.g. oxlint's JSON doesn't expose fixability,
+   * so we must NOT claim it is fixable.
+   */
+  fixable: z.boolean().optional(),
 });
 export type Diagnostic = z.infer<typeof DiagnosticSchema>;

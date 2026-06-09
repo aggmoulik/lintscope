@@ -25,6 +25,8 @@ export interface BiomeDiagnostic {
   severity: 'error' | 'warning' | 'info' | 'hint';
   description: string;
   message?: unknown;
+  /** Biome marks auto-fixable diagnostics with a `fixable` tag. */
+  tags?: string[];
   location?: {
     path?: string | { file?: string };
     sourceCode?: string;
@@ -81,6 +83,9 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
     const ruleId = d.category;
     ruleFrequency[ruleId] = (ruleFrequency[ruleId] ?? 0) + 1;
 
+    const fixable =
+      Array.isArray(d.tags) && d.tags.some((t) => String(t).toLowerCase() === 'fixable');
+
     const diagnostic: Diagnostic = {
       id: diagnosticId({ relativePath, line, column, ruleId, message }),
       filePath: absolute,
@@ -97,6 +102,7 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
       diagnostic.endLine = end.line;
       diagnostic.endColumn = end.column;
     }
+    if (fixable) diagnostic.fixable = true;
     diagnostics.push(diagnostic);
 
     const bucket = filesIndex.get(absolute) ?? { errorCount: 0, warningCount: 0 };
@@ -131,10 +137,8 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
     summary: {
       errorCount: totalErrors,
       warningCount: totalWarnings,
-      // Biome's JSON reporter doesn't expose per-diagnostic fixability; the
-      // CLI uses --apply to fix in-place. We report 0 here and let consumers
-      // run `biome lint --write` themselves.
-      fixableCount: 0,
+      // Biome marks auto-fixable diagnostics with a `fixable` tag; count those.
+      fixableCount: diagnostics.filter((d) => d.fixable).length,
       fileCount: files.length,
       ruleFrequency,
     },

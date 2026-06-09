@@ -9,6 +9,22 @@ const FIXTURE = JSON.parse(
   readFileSync(path.join(__dirname, 'fixtures/oxc-results.json'), 'utf8'),
 ) as OxcReport;
 
+// Captured from a real `oxlint --format=json` run — oxlint's JSON exposes no
+// per-diagnostic fix info, so every mapped diagnostic must have `fixable`
+// undefined (we must never guess fixability for oxc).
+const OXC_FIXABLE = JSON.parse(
+  readFileSync(path.join(__dirname, 'fixtures/oxc-fixable.json'), 'utf8'),
+) as OxcReport;
+
+describe('mapOxcResults — fixability', () => {
+  it('never marks oxc diagnostics fixable (oxlint JSON omits fix info)', () => {
+    const report = mapOxcResults(OXC_FIXABLE, { cwd: '/repo', oxcVersion: '1.66.0' });
+    expect(report.diagnostics.length).toBeGreaterThan(0);
+    expect(report.diagnostics.every((d) => d.fixable === undefined)).toBe(true);
+    expect(report.summary.fixableCount).toBe(0);
+  });
+});
+
 describe('mapOxcResults', () => {
   const ctx = { cwd: '/repo', oxcVersion: '0.13.0' };
 

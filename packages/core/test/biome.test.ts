@@ -9,6 +9,12 @@ const FIXTURE = JSON.parse(
   readFileSync(path.join(__dirname, 'fixtures/biome-results.json'), 'utf8'),
 ) as BiomeReport;
 
+// Captured from a real `biome lint --reporter=json` run: a fixable rule
+// (useConst → `tags: ["fixable"]`) alongside a non-fixable one (noForEach).
+const FIXABLE = JSON.parse(
+  readFileSync(path.join(__dirname, 'fixtures/biome-fixable.json'), 'utf8'),
+) as BiomeReport;
+
 describe('mapBiomeResults', () => {
   const ctx = { cwd: '/repo', biomeVersion: '1.9.4' };
 
@@ -135,5 +141,22 @@ describe('mapBiomeResults', () => {
   it('passes configPath through to the linter info', () => {
     const report = mapBiomeResults(FIXTURE, { ...ctx, configPath: '/repo/biome.json' });
     expect(report.linters[0]?.configPath).toBe('/repo/biome.json');
+  });
+});
+
+describe('mapBiomeResults — fixability', () => {
+  const ctx = { cwd: '/repo', biomeVersion: '1.8.3' };
+
+  it('marks diagnostics with a Biome `fixable` tag as fixable', () => {
+    const report = mapBiomeResults(FIXABLE, ctx);
+    const useConst = report.diagnostics.find((d) => d.ruleId === 'lint/style/useConst');
+    const noForEach = report.diagnostics.find((d) => d.ruleId === 'lint/complexity/noForEach');
+    expect(useConst?.fixable).toBe(true);
+    expect(noForEach?.fixable).toBeUndefined();
+  });
+
+  it('counts only the fixable diagnostics in the summary', () => {
+    const report = mapBiomeResults(FIXABLE, ctx);
+    expect(report.summary.fixableCount).toBe(1);
   });
 });
