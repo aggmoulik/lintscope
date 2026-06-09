@@ -7,5 +7,13 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@lintscope/registry", "@lintscope/tsconfig"]
+  "ignore": [
+    "@lintscope/registry",
+    "@lintscope/tsconfig",
+    "@lintscope/core",
+    "@lintscope/schema",
+    "@lintscope/api-schema",
+    "@lintscope/studio-server",
+    "@lintscope/ui"
+  ]
 }

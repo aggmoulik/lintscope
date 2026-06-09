@@ -7,13 +7,9 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: 'node20',
-  external: [
-    '@lintscope/api-schema',
-    '@lintscope/core',
-    '@lintscope/schema',
-    '@lintscope/studio-server',
-    'chokidar',
-    'commander',
-  ],
+  // Bundle the internal `@lintscope/*` workspace packages (+ zod) into the CLI so
+  // `lintscope` is the ONLY package we publish — the rest stay private/internal.
+  // Only real npm runtime deps are external.
+  external: ['chokidar', 'commander'],
   banner: { js: '#!/usr/bin/env node' },
 });

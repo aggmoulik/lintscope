@@ -106,6 +106,13 @@ importers:
 
   packages/cli:
     dependencies:
+      chokidar:
+        specifier: 4.0.3
+        version: 4.0.3
+      commander:
+        specifier: 13.0.0
+        version: 13.0.0
+    devDependencies:
       '@lintscope/api-schema':
         specifier: workspace:*
         version: link:../api-schema
@@ -118,13 +125,6 @@ importers:
       '@lintscope/studio-server':
         specifier: workspace:*
         version: link:../studio-server
-      chokidar:
-        specifier: 4.0.3
-        version: 4.0.3
-      commander:
-        specifier: 13.0.0
-        version: 13.0.0
-    devDependencies:
       '@lintscope/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

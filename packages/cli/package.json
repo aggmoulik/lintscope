@@ -36,14 +36,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lintscope/api-schema": "workspace:*",
-    "@lintscope/core": "workspace:*",
-    "@lintscope/schema": "workspace:*",
-    "@lintscope/studio-server": "workspace:*",
     "chokidar": "4.0.3",
     "commander": "13.0.0"
   },
   "devDependencies": {
+    "@lintscope/api-schema": "workspace:*",
+    "@lintscope/core": "workspace:*",
+    "@lintscope/schema": "workspace:*",
+    "@lintscope/studio-server": "workspace:*",
     "@lintscope/tsconfig": "workspace:*",
     "@types/node": "25.9.1",
     "tsup": "8.5.1",
