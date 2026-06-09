@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # One PR for routine dev/build tooling bumps.
+      dev-tooling:
+        patterns:
+          - "@biomejs/*"
+          - "turbo"
+          - "tsup"
+          - "tsx"
+          - "vitest"
+          - "typescript"
+          - "@types/*"
+    # Linter adapters depend on specific output formats — review these by hand.
+    ignore:
+      - dependency-name: "eslint"
+      - dependency-name: "@biomejs/biome"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "oxlint"
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

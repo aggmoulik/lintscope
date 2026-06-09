@@ -100,9 +100,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-      - name: scan against fixture
+      - name: export a report against the fixture
         working-directory: fixture
-        run: node ../packages/cli/dist/lintscope.js scan -o /tmp/report.json
+        # `export` is the non-interactive command — runs the linter(s) and writes
+        # JSON. (`scan`/`studio` spawn the studio server + browser and stay alive.)
+        run: node ../packages/cli/dist/lintscope.js export -o /tmp/report.json
 
       - name: assert report shape
         run: |

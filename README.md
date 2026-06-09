@@ -2,109 +2,110 @@
 
 # lintscope
 
-**A polished UI for your linter — runs in your browser, data stays on your machine.**
+**A polished UI for your linter — runs in your browser, your code stays on your machine.**
 
+[![npm](https://img.shields.io/npm/v/lintscope.svg)](https://www.npmjs.com/package/lintscope)
+[![CI](https://github.com/aggmoulik/lintscope/actions/workflows/ci.yml/badge.svg)](https://github.com/aggmoulik/lintscope/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Status: pre-alpha](https://img.shields.io/badge/Status-pre--alpha-orange.svg)](#status)
 
 </div>
 
 ---
 
+```sh
+npx lintscope studio
+```
+
+That's it — lintscope runs your project's linters and opens a polished dashboard in your browser. Your code and diagnostics **never leave your machine**.
+
 ## Why
 
-ESLint, Biome, and oxlint all emit JSON — but the only tools that visualize their output are:
+ESLint, Biome, and oxlint all emit JSON — but the only ways to *see* their output are:
 
-- The terminal (`stylish`, `pretty`, `compact`) — fine for a handful of issues, painful for monorepos.
-- IDE Problems panes — not shareable, not designed for triage at scale.
-- SaaS dashboards (SonarQube, Codacy, DeepSource) — heavyweight, hosted, your code leaves your machine.
+- The terminal — fine for a handful of issues, painful for monorepos.
+- IDE Problems panes — not shareable, not built for triage at scale.
+- SaaS dashboards (SonarQube, Codacy, …) — heavyweight, hosted, your code leaves your machine.
 
-There is no local-first, framework-agnostic, polished web UI for browsing lint output across linters. **lintscope** is that.
+There's no local-first, framework-agnostic, polished web UI for browsing lint output across linters. **lintscope** is that.
+
+## Highlights
+
+- 🔒 **Local-first** — the dashboard is hosted, but it only ever talks to a server on *your* `localhost`. No code, no diagnostics, no third parties.
+- 🧩 **Multi-linter** — runs **every** linter your project configures (ESLint + Biome + oxlint) in parallel and merges them into one dashboard, tagged + filterable per linter.
+- 🎯 **Runs your linter, your config** — spawns the linter installed in your project at its own version and respects your config exactly (no re-implementation).
+- 🗂️ **Monorepo-aware** — `lintscope studio apps/web` finds the config at the repo root and scopes the run to that package.
+- ⚡ **Fast** — virtualized list stays at 60fps even at 100k diagnostics.
+- 🪄 **Clean URL** — the studio opens a bare `registry-seven-khaki.vercel.app/studio` (no tokens/ports in the address bar); the page discovers your local server itself.
 
 ## How it works
 
 lintscope is shaped like [Drizzle Studio](https://orm.drizzle.team/drizzle-studio/overview):
 
+- `lintscope studio` runs your linters and spawns a **local HTTP server** on `127.0.0.1`.
+- Your browser opens to **`https://registry-seven-khaki.vercel.app/studio`** — a hosted, always-latest UI.
+- That page makes plain `http://127.0.0.1:<port>` calls back to your local server. Browsers exempt `localhost` from mixed-content rules ([Secure Contexts spec](https://www.w3.org/TR/secure-contexts/#localhost)) — no TLS dance.
+- The session token is fetched over an **origin- and CORS-gated handshake** (never in the URL); a **DNS-rebinding guard** + Private Network Access handling keep the local server locked to the real UI.
+- Watch mode pushes updates over Server-Sent Events. The hosted UI is always-latest — UI improvements ship without a CLI republish.
+
+## Commands
+
 ```sh
-npx lintscope studio
+lintscope studio [paths…]   # lint + open the dashboard (default; `scan` is an alias)
+lintscope watch  [paths…]   # …and live-update on file changes
+lintscope export [paths…]   # run once, emit a LintReport JSON (CI / piping) — no browser
+lintscope init              # write a lintscope.config.json with the detected linter(s)
 ```
 
-- The CLI runs your linter and spawns a **local HTTP server** on a random free port.
-- Your browser opens to **`https://lintscope.dev/studio?host=localhost&port=<PORT>&token=<UUID>`**.
-- The hosted page makes plain `http://localhost:<PORT>` REST calls back to that local server.
-  This is allowed because browsers exempt `localhost` from mixed-content rules ([Secure Contexts spec](https://www.w3.org/TR/secure-contexts/#localhost)) — no TLS cert dance.
-- Watch mode uses a Server-Sent Events stream at `GET /events` for push updates.
-- The hosted UI is **always-latest** — no CLI republishes needed for UI improvements.
-- Your code and your diagnostics **never leave your machine** — the studio page only ever talks to your local CLI.
+### View results you already have
 
-## View your existing lint results
-
-Already running ESLint, Biome, or OXC in your repo or CI? Pipe their JSON straight into the studio — **lintscope never spawns the linter**, you do:
+Already running a linter in CI or locally? Pipe its JSON straight in — lintscope never spawns the linter, you do:
 
 ```sh
-# ESLint
 eslint -f json . | npx lintscope view --from eslint
-
-# Biome
 biome lint --reporter=json . | npx lintscope view --from biome
-
-# OXC / oxlint
 oxlint --format=json . | npx lintscope view --from oxc
 ```
 
-Or pass a saved file:
+## Component registry (shadcn)
+
+The dashboard is built from a **shadcn-compatible registry** — drop pieces into your own internal tools:
 
 ```sh
-eslint -f json . > report.json
-npx lintscope view --from eslint report.json
+npx shadcn add https://registry-seven-khaki.vercel.app/r/diagnostic-list.json
 ```
 
-The browser opens to the same studio dashboard as `lintscope scan`, in **render-only** mode (no re-run, no watch). Run the command from your repo root so file-source previews resolve.
-
-You also get a **shadcn-compatible component registry** for embedding pieces of the UI in your own dashboards:
-
-```sh
-npx shadcn add https://lintscope.dev/r/diagnostic-list.json
-```
-
-Components include `<DiagnosticList />`, `<DiagnosticCard />`, `<SeverityBadge />`, `<LintDashboard />`, with `<FileTree />`, `<RuleSummary />`, and `<DiffPreview />` landing in v1.0.
+Components: `<DiagnosticList />`, `<DiagnosticCard />`, `<SeverityBadge />`, `<LinterBadge />`, `<FileTree />`, `<RuleSummary />`, `<DiffPreview />`, `<CommandPalette />`, `<LintDashboard />`. They consume the `Diagnostic` type from `@lintscope/schema`.
 
 ## Linter support
 
-| Linter | Status | Notes |
+| Linter | Status | How |
 |---|---|---|
-| ESLint | Phase 1 | Flat + legacy config, via `eslint --format json` |
-| Biome | Phase 3 | `biome lint --reporter=json` (lint-only) |
-| OXC / oxlint | Phase 4 | Defensive parsing — format still drifting |
-| tsc / typescript-eslint | Phase 5+ | Type errors as diagnostics |
-| Stylelint | Phase 5+ | Easy adapter once core is solid |
+| ESLint | ✅ | `eslint --format json` (flat + legacy config) |
+| Biome | ✅ | `biome lint --reporter=json` (lint-only) |
+| OXC / oxlint | ✅ | `oxlint --format=json` (defensive parsing) |
+| tsc / typescript-eslint | planned | type errors as diagnostics |
+| Stylelint | planned | |
 
 ## Architecture
 
-Monorepo. pnpm + Turborepo.
+pnpm + Turborepo monorepo:
 
 ```
-apps/
-  registry       Next.js 15 site at lintscope.dev
-                 · landing + MDX docs
-                 · /r/[name].json registry
-                 · /studio (the hosted dashboard UI)
-packages/
-  cli            Commander CLI: init | scan | studio | watch | view | export
-  studio-server  Lint-agnostic framework: HTTP + CORS + token + SSE + browser-open.
-                 Designed for standalone publish post-v1.0 (the Drizzle-Studio
-                 pattern as a reusable library — no equivalent exists today).
-  api-schema     Zod request/response + SSE payload schemas (CLI ↔ /studio page)
-  core           Linter adapters + normalization + watching
-  ui             Source-of-truth React components (the registry serves these)
-  schema         Zod Diagnostic + LintReport types
-  tsconfig       Shared tsconfig bases
-fixture/         Sample lintable project for CLI integration tests
+apps/registry        Next.js site at registry-seven-khaki.vercel.app (landing · /r registry · /studio)
+packages/cli         Commander CLI: init · scan · studio · watch · view · export
+packages/studio-server  Lint-AGNOSTIC transport (HTTP + CORS + token + handshake + SSE).
+                        Extract candidate post-v1.0 — no equivalent framework exists today.
+packages/api-schema  Zod request/response + SSE schemas (CLI ↔ /studio page)
+packages/core        Linter adapters + normalization + watching
+packages/ui          Source-of-truth React components (the registry serves these)
+packages/schema      Zod Diagnostic + LintReport (schemaVersion 1.0)
 ```
 
 ## Status
 
-**Pre-alpha.** Phase 1 foundation (schema · core · components · registry) is scaffolded. Phase 2 (CLI + `/studio`) is next. Building in public — follow along at [github.com/aggmoulik/lintscope](https://github.com/aggmoulik/lintscope).
+**v0.1 — early but usable.** Building in public — follow along and contribute at
+[github.com/aggmoulik/lintscope](https://github.com/aggmoulik/lintscope). See
+[CONTRIBUTING.md](./CONTRIBUTING.md) to get started.
 
 ## License
 
