@@ -3,6 +3,19 @@ name: release
 on:
   push:
     branches: [main]
+    # Only run the release when the published CLI — or a package it bundles —
+    # changes. `lintscope` is the only npm package; it inlines core, schema,
+    # api-schema, and studio-server (NOT ui / registry, which never ship to npm).
+    # `.changeset/**` drives the version-PR flow; `pnpm-lock.yaml` covers
+    # runtime-dependency bumps (chokidar / commander).
+    paths:
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/schema/**'
+      - 'packages/api-schema/**'
+      - 'packages/studio-server/**'
+      - '.changeset/**'
+      - 'pnpm-lock.yaml'
 
 concurrency:
   group: release
