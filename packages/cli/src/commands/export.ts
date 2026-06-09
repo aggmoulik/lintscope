@@ -1,7 +1,8 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { resolveLintScope, runLinter } from '@lintscope/core';
+import { resolveLintScope, runLinters } from '@lintscope/core';
 import type { LintReport } from '@lintscope/schema';
+import { warnSkippedLinters } from '../warn-skipped';
 
 export interface ExportOptions {
   cwd: string;
@@ -24,11 +25,11 @@ export async function runExport(options: ExportOptions): Promise<{
     cwd: path.resolve(options.cwd),
     ...(options.targets && options.targets.length > 0 ? { targets: options.targets } : {}),
   });
-  const report = await runLinter({
+  const { report, skipped } = await runLinters({
     cwd: scope.projectRoot,
-    linter: scope.linter,
     ...(scope.patterns ? { patterns: scope.patterns } : {}),
   });
+  warnSkippedLinters(skipped);
   const json = `${JSON.stringify(report, null, 2)}\n`;
 
   if (!options.out || options.out === '-') {

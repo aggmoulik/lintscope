@@ -12,6 +12,7 @@ import { cn } from '../lib/utils';
 import { CommandPalette, type CommandPaletteAction } from './command-palette';
 import { DiagnosticList } from './diagnostic-list';
 import { FileTree } from './file-tree';
+import { LinterBadge } from './linter-badge';
 import { RuleSummary } from './rule-summary';
 
 export interface LintDashboardProps {
@@ -69,6 +70,10 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
     setFilters((f) => ({ ...f, ruleId: ruleId === f.ruleId ? null : ruleId }));
   }, []);
 
+  const onSelectSource = useCallback((source: string | null) => {
+    setFilters((f) => ({ ...f, source }));
+  }, []);
+
   return (
     <section
       className={cn(
@@ -83,6 +88,8 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
         totalCount={report.diagnostics.length}
         onOpenPalette={() => setPaletteOpen(true)}
       />
+
+      <LinterFilter report={report} selected={filters.source} onSelect={onSelectSource} />
 
       <FilterPills
         filters={filters}
@@ -131,6 +138,58 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
 }
 
 /* ---------- internal pieces ---------- */
+
+/**
+ * Per-linter filter row — one badge per linter that ran, with its diagnostic
+ * count. Click to filter the dashboard to that linter (click again to clear).
+ * Hidden when only one linter ran (nothing to filter between).
+ */
+function LinterFilter({
+  report,
+  selected,
+  onSelect,
+}: {
+  report: LintReport;
+  selected: string | null;
+  onSelect: (source: string | null) => void;
+}) {
+  if (report.linters.length <= 1) return null;
+
+  const countBySource = new Map<string, number>();
+  for (const d of report.diagnostics) {
+    countBySource.set(d.source, (countBySource.get(d.source) ?? 0) + 1);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2" data-testid="linter-filter">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+        linters
+      </span>
+      {report.linters.map((l) => {
+        const active = selected === l.name;
+        return (
+          <button
+            key={l.name}
+            type="button"
+            onClick={() => onSelect(active ? null : l.name)}
+            aria-pressed={active}
+            data-linter-filter={l.name}
+            className={cn(
+              'rounded-md ring-1 ring-inset transition',
+              active
+                ? 'ring-zinc-900 dark:ring-zinc-100'
+                : 'ring-transparent opacity-70 hover:opacity-100',
+            )}
+          >
+            <LinterBadge source={l.name}>
+              {l.name} · {countBySource.get(l.name) ?? 0}
+            </LinterBadge>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function DashboardHeader({
   report,

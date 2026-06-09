@@ -114,6 +114,49 @@ describe('<LintDashboard /> v2', () => {
   });
 });
 
+const MULTI_REPORT: LintReport = {
+  ...REPORT,
+  linters: [
+    { name: 'eslint', version: '9.15.0' },
+    { name: 'oxc', version: '1.66.0' },
+  ],
+  diagnostics: [
+    makeDiagnostic({ id: 'm1', source: 'eslint', ruleId: 'no-console', relativePath: 'src/a.ts' }),
+    makeDiagnostic({ id: 'm2', source: 'oxc', ruleId: 'no-debugger', relativePath: 'src/a.ts' }),
+    makeDiagnostic({
+      id: 'm3',
+      source: 'oxc',
+      ruleId: 'no-debugger',
+      severity: 'warning',
+      relativePath: 'src/b.ts',
+    }),
+  ],
+};
+
+describe('<LintDashboard /> multi-linter', () => {
+  it('shows no linter-filter row when only one linter ran', () => {
+    render(<LintDashboard report={REPORT} />);
+    expect(screen.queryByTestId('linter-filter')).toBeNull();
+  });
+
+  it('renders a linter-filter row with one badge per linter and its diagnostic count', () => {
+    render(<LintDashboard report={MULTI_REPORT} />);
+    const row = screen.getByTestId('linter-filter');
+    expect(within(row).getByText(/eslint · 1/)).toBeDefined();
+    expect(within(row).getByText(/oxc · 2/)).toBeDefined();
+  });
+
+  it('filters diagnostics by linter when a badge is clicked', () => {
+    render(<LintDashboard report={MULTI_REPORT} />);
+    const row = screen.getByTestId('linter-filter');
+    const oxcBtn = row.querySelector('[data-linter-filter="oxc"]');
+    expect(oxcBtn).not.toBeNull();
+    if (oxcBtn) fireEvent.click(oxcBtn);
+    expect(screen.getByTestId('filter-pills').textContent).toContain('linter: oxc');
+    expect(screen.getByText(/showing 2 of 3/)).toBeDefined();
+  });
+});
+
 // Note: the previous "right-side DiffPreview panel" tests were removed when
 // LintDashboard stopped rendering that panel — every diagnostic card now
 // renders its own inline preview (DiffViewer for autofixes, CodePreview

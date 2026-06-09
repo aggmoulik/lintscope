@@ -32,7 +32,6 @@ function makeContext(report: LintReport, projectRoot = '/repo'): LintContext {
   return {
     projectRoot,
     name: 'lintscope',
-    linter: 'eslint',
     report,
     rerun: () => Promise.resolve(report),
   };

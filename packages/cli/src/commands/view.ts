@@ -50,7 +50,6 @@ export async function runView(options: ViewOptions): Promise<ViewHandle> {
   const context: LintContext = {
     projectRoot: cwd,
     name: 'lintscope',
-    linter: options.from,
     report,
   };
 

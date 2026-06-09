@@ -31,6 +31,7 @@ export {
   detectBiomeConfig,
   detectEslintConfig,
   detectLinter,
+  detectLinters,
   detectOxcConfig,
 } from './detect-config';
 export {
@@ -43,11 +44,16 @@ export {
 } from './resolve-bin';
 export {
   type LinterName,
+  mergeReports,
   type ResolvedLinterChoice,
   type ResolvedLintScope,
   type ResolveLintScopeOptions,
   type RunLinterOptions,
+  type RunLintersOptions,
+  type RunLintersResult,
   resolveLinterChoice,
   resolveLintScope,
   runLinter,
+  runLinters,
+  type SkippedLinter,
 } from './run-linter';

@@ -1,12 +1,13 @@
 import path from 'node:path';
 import { STUDIO_DISCOVERY_PORTS } from '@lintscope/api-schema';
-import { resolveLintScope, runLinter } from '@lintscope/core';
+import { resolveLintScope, runLinters } from '@lintscope/core';
 import { createStudioServer, type StudioServerInstance } from '@lintscope/studio-server';
 import type { LintContext } from '../context';
 import { handleFileRequest } from '../handlers/file';
 import { buildInitPayload } from '../handlers/init';
 import { buildReportPayload } from '../handlers/report';
 import { handleScanRequest } from '../handlers/scan';
+import { warnSkippedLinters } from '../warn-skipped';
 import { startWatcher, type Watcher } from '../watch';
 
 export interface StudioOptions {
@@ -58,26 +59,25 @@ export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
     options.allowOrigin ?? process.env.LINTSCOPE_ALLOW_ORIGIN ?? new URL(hostedUi).origin;
   const watchEnabled = options.watch === true;
 
-  // Find the linter config (walking up from cwd) and scope the file set to any
-  // positional targets / the sub-package we're in. Throws a clear
-  // "No linter detected" error if no supported config is found.
+  // Find the config dir (walking up from cwd) + scope the file set to any
+  // positional targets / the sub-package we're in, then run EVERY linter
+  // configured there. Throws "No linter detected" if no supported config exists.
   const scope = resolveLintScope({
     cwd,
     ...(options.targets && options.targets.length > 0 ? { targets: options.targets } : {}),
   });
-  const runOptions = {
+  const runArgs = {
     cwd: scope.projectRoot,
-    linter: scope.linter,
     ...(scope.patterns ? { patterns: scope.patterns } : {}),
   };
-  const initialReport = await runLinter(runOptions);
+  const { report: initialReport, skipped } = await runLinters(runArgs);
+  warnSkippedLinters(skipped);
 
   const context: LintContext = {
     projectRoot: scope.projectRoot,
     name: 'lintscope',
-    linter: scope.linter,
     report: initialReport,
-    rerun: () => runLinter(runOptions),
+    rerun: async () => (await runLinters(runArgs)).report,
   };
 
   const studio = await createStudioServer({

@@ -82,17 +82,28 @@ export type DetectedLinter =
   | { linter: 'eslint'; config: DetectedEslintConfig };
 
 /**
- * Pick the linter for a project based on which config files exist.
- * Precedence: oxc > biome > eslint. The reasoning is migration intent — a
- * project that has switched to the faster, newer tool wants its output.
- * Explicit `--linter` flags will override this default (tracked for v1.x).
+ * Pick the single highest-precedence linter for a project (oxc > biome >
+ * eslint). The reasoning is migration intent — a project that has switched to
+ * the faster, newer tool wants its output. Used by `view` and as a building
+ * block; the studio/scan/export flows run ALL linters via `detectLinters`.
  */
 export function detectLinter(cwd: string): DetectedLinter | null {
+  return detectLinters(cwd)[0] ?? null;
+}
+
+/**
+ * Detect EVERY linter that has a config in `cwd`, in precedence order
+ * (oxc > biome > eslint) — a workspace often runs more than one (e.g. Biome
+ * for format + ESLint for rules). The order is the default *focus*, not an
+ * exclusion. Returns `[]` when none are configured.
+ */
+export function detectLinters(cwd: string): DetectedLinter[] {
+  const detected: DetectedLinter[] = [];
   const oxc = detectOxcConfig(cwd);
-  if (oxc) return { linter: 'oxc', config: oxc };
+  if (oxc) detected.push({ linter: 'oxc', config: oxc });
   const biome = detectBiomeConfig(cwd);
-  if (biome) return { linter: 'biome', config: biome };
+  if (biome) detected.push({ linter: 'biome', config: biome });
   const eslint = detectEslintConfig(cwd);
-  if (eslint) return { linter: 'eslint', config: eslint };
-  return null;
+  if (eslint) detected.push({ linter: 'eslint', config: eslint });
+  return detected;
 }

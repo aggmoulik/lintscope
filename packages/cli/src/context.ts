@@ -10,9 +10,8 @@ export interface LintContext {
   projectRoot: string;
   /** Display name surfaced to the studio page via `/init`. */
   name: string;
-  /** Linter the CLI session is bound to. */
-  linter: 'eslint' | 'biome' | 'oxc';
-  /** Memoized report. Updated by /scan and (later) the watch reconciler. */
+  /** Memoized report. Updated by /scan and (later) the watch reconciler. The
+   * linters that ran are on `report.linters` (a session can run several). */
   report: LintReport;
   /**
    * Re-run the linter. Returns the fresh report; the caller is responsible for
