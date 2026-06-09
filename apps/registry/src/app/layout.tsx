@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: 'lintscope — A polished UI for your linter',
   description:
     'Copy-paste React components and a CLI for browsing ESLint, Biome, and OXC output in a real UI.',
-  metadataBase: new URL('https://lintscope.dev'),
+  metadataBase: new URL('https://lintscope.vercel.app'),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

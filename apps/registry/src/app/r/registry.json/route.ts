@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 const REGISTRY = {
   $schema: 'https://ui.shadcn.com/schema/registry.json',
   name: 'lintscope',
-  homepage: 'https://lintscope.dev',
+  homepage: 'https://lintscope.vercel.app',
   items: [
     { name: 'severity-badge', type: 'registry:component' },
     { name: 'diagnostic-card', type: 'registry:component' },

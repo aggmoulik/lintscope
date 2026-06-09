@@ -31,7 +31,7 @@ cd fixture && node ../packages/cli/dist/lintscope.js studio --dev
 
 ## Monorepo layout
 ```
-apps/registry        Next.js site at lintscope.dev (landing · /r registry · /studio)
+apps/registry        Next.js site at lintscope.vercel.app (landing · /r registry · /studio)
 packages/cli         Commander CLI: init · scan · studio · watch · view · export
 packages/studio-server  Lint-AGNOSTIC transport (HTTP + CORS + token + handshake + SSE). No @lintscope/* imports.
 packages/api-schema  Zod request/response + SSE schemas (CLI ↔ /studio page)

@@ -303,7 +303,7 @@ export default function HomePage() {
                   <p className="text-sm leading-relaxed text-ink-muted">{c.description}</p>
                   <CommandChip
                     prefix=""
-                    command={`npx shadcn add https://lintscope.dev/r/${c.name}.json`}
+                    command={`npx shadcn add https://lintscope.vercel.app/r/${c.name}.json`}
                     className="mt-auto text-[13px]"
                   />
                 </li>

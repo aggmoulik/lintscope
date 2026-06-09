@@ -2,7 +2,7 @@
   "name": "@lintscope/registry",
   "version": "0.0.0",
   "private": true,
-  "description": "Public registry site at lintscope.dev. Hosts /r/[name].json + MDX docs + live previews.",
+  "description": "Public registry site at lintscope.vercel.app. Hosts /r/[name].json + MDX docs + live previews.",
   "license": "MIT",
   "type": "module",
   "scripts": {
