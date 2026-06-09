@@ -35,9 +35,13 @@ export interface StudioOptions {
   targets?: string[];
 }
 
-// Default hosted UI. TODO: swap to https://lintscope.dev/studio once the custom
-// domain is attached to this Vercel project.
-const DEFAULT_HOSTED_UI = 'https://registry-seven-khaki.vercel.app/studio';
+// Default hosted UI. The studio page makes cross-origin calls back to this
+// local server, and the server's CORS allow-list is derived from THIS origin
+// (below). So the CLI must open the studio's *final* origin directly — a
+// domain-level redirect (e.g. old → new) would change the page's Origin and
+// the handshake would be rejected. TODO: swap to https://lintscope.dev/studio
+// once that custom domain is attached.
+const DEFAULT_HOSTED_UI = 'https://lintscope.vercel.app/studio';
 
 export interface StudioHandle {
   studio: StudioServerInstance;

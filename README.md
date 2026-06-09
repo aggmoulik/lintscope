@@ -35,14 +35,14 @@ There's no local-first, framework-agnostic, polished web UI for browsing lint ou
 - 🎯 **Runs your linter, your config** — spawns the linter installed in your project at its own version and respects your config exactly (no re-implementation).
 - 🗂️ **Monorepo-aware** — `lintscope studio apps/web` finds the config at the repo root and scopes the run to that package.
 - ⚡ **Fast** — virtualized list stays at 60fps even at 100k diagnostics.
-- 🪄 **Clean URL** — the studio opens a bare `registry-seven-khaki.vercel.app/studio` (no tokens/ports in the address bar); the page discovers your local server itself.
+- 🪄 **Clean URL** — the studio opens a bare `lintscope.vercel.app/studio` (no tokens/ports in the address bar); the page discovers your local server itself.
 
 ## How it works
 
 lintscope is shaped like [Drizzle Studio](https://orm.drizzle.team/drizzle-studio/overview):
 
 - `lintscope studio` runs your linters and spawns a **local HTTP server** on `127.0.0.1`.
-- Your browser opens to **`https://registry-seven-khaki.vercel.app/studio`** — a hosted, always-latest UI.
+- Your browser opens to **`https://lintscope.vercel.app/studio`** — a hosted, always-latest UI.
 - That page makes plain `http://127.0.0.1:<port>` calls back to your local server. Browsers exempt `localhost` from mixed-content rules ([Secure Contexts spec](https://www.w3.org/TR/secure-contexts/#localhost)) — no TLS dance.
 - The session token is fetched over an **origin- and CORS-gated handshake** (never in the URL); a **DNS-rebinding guard** + Private Network Access handling keep the local server locked to the real UI.
 - Watch mode pushes updates over Server-Sent Events. The hosted UI is always-latest — UI improvements ship without a CLI republish.
@@ -71,7 +71,7 @@ oxlint --format=json . | npx lintscope view --from oxc
 The dashboard is built from a **shadcn-compatible registry** — drop pieces into your own internal tools:
 
 ```sh
-npx shadcn add https://registry-seven-khaki.vercel.app/r/diagnostic-list.json
+npx shadcn add https://lintscope.vercel.app/r/diagnostic-list.json
 ```
 
 Components: `<DiagnosticList />`, `<DiagnosticCard />`, `<SeverityBadge />`, `<LinterBadge />`, `<FileTree />`, `<RuleSummary />`, `<DiffPreview />`, `<CommandPalette />`, `<LintDashboard />`. They consume the `Diagnostic` type from `@lintscope/schema`.
@@ -91,7 +91,7 @@ Components: `<DiagnosticList />`, `<DiagnosticCard />`, `<SeverityBadge />`, `<L
 pnpm + Turborepo monorepo:
 
 ```
-apps/registry        Next.js site at registry-seven-khaki.vercel.app (landing · /r registry · /studio)
+apps/registry        Next.js site at lintscope.vercel.app (landing · /r registry · /studio)
 packages/cli         Commander CLI: init · scan · studio · watch · view · export
 packages/studio-server  Lint-AGNOSTIC transport (HTTP + CORS + token + handshake + SSE).
                         Extract candidate post-v1.0 — no equivalent framework exists today.

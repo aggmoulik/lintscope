@@ -22,9 +22,10 @@ export interface ViewOptions {
   open?: boolean;
 }
 
-// Default hosted UI. TODO: swap to https://lintscope.dev/studio once the custom
-// domain is attached to this Vercel project.
-const DEFAULT_HOSTED_UI = 'https://registry-seven-khaki.vercel.app/studio';
+// Default hosted UI — open the studio's final origin directly (a redirect would
+// change the page Origin and break the local CORS handshake). TODO: swap to
+// https://lintscope.dev/studio once that custom domain is attached.
+const DEFAULT_HOSTED_UI = 'https://lintscope.vercel.app/studio';
 
 export interface ViewHandle {
   studio: StudioServerInstance;
