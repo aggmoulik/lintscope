@@ -6,26 +6,19 @@ import type { LintContext } from '../context';
 import { handleFileRequest } from '../handlers/file';
 import { buildInitPayload } from '../handlers/init';
 import { buildReportPayload } from '../handlers/report';
+import { type HostedUiOptions, resolveHostedUi } from '../hosted-ui';
 import { type LinterFormat, loadReport } from '../load-report';
 import { readStdin } from '../read-stdin';
 
-export interface ViewOptions {
+export interface ViewOptions extends HostedUiOptions {
   cwd: string;
   /** Which raw linter JSON format the input is. */
   from: LinterFormat;
   /** Path to a file containing the JSON. Omit to read from stdin. */
   file?: string;
-  /** Studio flags — same defaults as `runStudio`. */
-  hostedUi?: string;
-  allowOrigin?: string;
   port?: number;
   open?: boolean;
 }
-
-// Default hosted UI — open the studio's final origin directly (a redirect would
-// change the page Origin and break the local CORS handshake). TODO: swap to
-// https://lintscope.dev/studio once that custom domain is attached.
-const DEFAULT_HOSTED_UI = 'https://lintscope.vercel.app/studio';
 
 export interface ViewHandle {
   studio: StudioServerInstance;
@@ -44,9 +37,7 @@ export async function runView(options: ViewOptions): Promise<ViewHandle> {
   const raw = await readInput(options);
   const report = loadReport(options.from, raw, cwd);
 
-  const hostedUi = options.hostedUi ?? process.env.LINTSCOPE_HOSTED_UI ?? DEFAULT_HOSTED_UI;
-  const allowOrigin =
-    options.allowOrigin ?? process.env.LINTSCOPE_ALLOW_ORIGIN ?? new URL(hostedUi).origin;
+  const { hostedUi, allowOrigin } = resolveHostedUi(options);
 
   const context: LintContext = {
     projectRoot: cwd,

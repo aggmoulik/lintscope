@@ -7,21 +7,12 @@ import { handleFileRequest } from '../handlers/file';
 import { buildInitPayload } from '../handlers/init';
 import { buildReportPayload } from '../handlers/report';
 import { handleScanRequest } from '../handlers/scan';
+import { type HostedUiOptions, resolveHostedUi } from '../hosted-ui';
 import { warnSkippedLinters } from '../warn-skipped';
 import { startWatcher, type Watcher } from '../watch';
 
-export interface StudioOptions {
+export interface StudioOptions extends HostedUiOptions {
   cwd: string;
-  /**
-   * Hosted UI URL. Precedence: `options.hostedUi` → `LINTSCOPE_HOSTED_UI`
-   * env var → `https://lintscope.dev/studio` default.
-   */
-  hostedUi?: string;
-  /**
-   * CORS allowlist. Precedence: `options.allowOrigin` → `LINTSCOPE_ALLOW_ORIGIN`
-   * env var → derived from the resolved `hostedUi` URL's origin.
-   */
-  allowOrigin?: string;
   /** Listen on this port. Defaults to 0 (random free). */
   port?: number;
   /** If false, don't open a browser. */
@@ -34,14 +25,6 @@ export interface StudioOptions {
    */
   targets?: string[];
 }
-
-// Default hosted UI. The studio page makes cross-origin calls back to this
-// local server, and the server's CORS allow-list is derived from THIS origin
-// (below). So the CLI must open the studio's *final* origin directly — a
-// domain-level redirect (e.g. old → new) would change the page's Origin and
-// the handshake would be rejected. TODO: swap to https://lintscope.dev/studio
-// once that custom domain is attached.
-const DEFAULT_HOSTED_UI = 'https://lintscope.vercel.app/studio';
 
 export interface StudioHandle {
   studio: StudioServerInstance;
@@ -58,9 +41,7 @@ export interface StudioHandle {
  */
 export async function runStudio(options: StudioOptions): Promise<StudioHandle> {
   const cwd = path.resolve(options.cwd);
-  const hostedUi = options.hostedUi ?? process.env.LINTSCOPE_HOSTED_UI ?? DEFAULT_HOSTED_UI;
-  const allowOrigin =
-    options.allowOrigin ?? process.env.LINTSCOPE_ALLOW_ORIGIN ?? new URL(hostedUi).origin;
+  const { hostedUi, allowOrigin } = resolveHostedUi(options);
   const watchEnabled = options.watch === true;
 
   // Find the config dir (walking up from cwd) + scope the file set to any
