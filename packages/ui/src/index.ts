@@ -47,12 +47,14 @@ export {
   Folder,
   type FolderProps,
 } from './components/file-tree-view';
+export { ICONS, Icon, type IconName, type IconProps } from './components/icon';
 export { LintDashboard, type LintDashboardProps } from './components/lint-dashboard';
 export {
   LinterBadge,
   type LinterBadgeProps,
   type LinterBadgeTone,
 } from './components/linter-badge';
+export { LinterLogo, type LinterLogoProps, linterLabel } from './components/linter-logo';
 export {
   RuleSummary,
   type RuleSummaryProps,
