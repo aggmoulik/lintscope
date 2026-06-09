@@ -46,7 +46,7 @@ Already running ESLint, Biome, or OXC in your repo or CI? Pipe their JSON straig
 eslint -f json . | npx lintscope view --from eslint
 
 # Biome
-biome check --reporter=json . | npx lintscope view --from biome
+biome lint --reporter=json . | npx lintscope view --from biome
 
 # OXC / oxlint
 oxlint --format=json . | npx lintscope view --from oxc
@@ -73,8 +73,8 @@ Components include `<DiagnosticList />`, `<DiagnosticCard />`, `<SeverityBadge /
 
 | Linter | Status | Notes |
 |---|---|---|
-| ESLint | Phase 1 (scaffold complete) | Flat config + legacy config, Node API |
-| Biome | Phase 3 | `biome check --reporter=json` |
+| ESLint | Phase 1 | Flat + legacy config, via `eslint --format json` |
+| Biome | Phase 3 | `biome lint --reporter=json` (lint-only) |
 | OXC / oxlint | Phase 4 | Defensive parsing — format still drifting |
 | tsc / typescript-eslint | Phase 5+ | Type errors as diagnostics |
 | Stylelint | Phase 5+ | Easy adapter once core is solid |

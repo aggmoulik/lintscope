@@ -8,7 +8,7 @@ export interface AutofixHintProps {
 
 const FIX_COMMAND: Record<AutofixHintProps['source'], string> = {
   eslint: 'eslint --fix',
-  biome: 'biome check --apply',
+  biome: 'biome lint --write',
   oxc: 'oxlint --fix',
 };
 

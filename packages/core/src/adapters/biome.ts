@@ -133,7 +133,7 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
       warningCount: totalWarnings,
       // Biome's JSON reporter doesn't expose per-diagnostic fixability; the
       // CLI uses --apply to fix in-place. We report 0 here and let consumers
-      // run `biome check --apply` themselves.
+      // run `biome lint --write` themselves.
       fixableCount: 0,
       fileCount: files.length,
       ruleFrequency,
@@ -208,8 +208,11 @@ export interface RunBiomeOptions {
 }
 
 /**
- * Spawn `biome check --reporter=json` and normalize the output into a
- * LintReport. Exits with a clear error if Biome is not installed.
+ * Spawn `biome lint --reporter=json` and normalize the output into a
+ * LintReport. We use `lint` (not `check`) so lintscope shows lint-rule
+ * violations only — consistent with the eslint/oxlint adapters — rather than
+ * `check`'s formatter + import-sort diffs. Exits with a clear error if Biome
+ * is not installed.
  */
 export async function runBiome(options: RunBiomeOptions): Promise<LintReport> {
   const patterns = options.patterns ?? ['.'];
@@ -218,7 +221,7 @@ export async function runBiome(options: RunBiomeOptions): Promise<LintReport> {
     name: 'biome',
     ...(options.binary ? { override: options.binary } : {}),
   });
-  const args = ['check', '--reporter=json', ...patterns];
+  const args = ['lint', '--reporter=json', ...patterns];
 
   const child = spawn(binary, args, {
     cwd: options.cwd,

@@ -18,7 +18,7 @@ export const LINTER_FORMATS: readonly LinterFormat[] = ['eslint', 'biome', 'oxc'
  */
 const PRODUCER_HINT: Record<LinterFormat, string> = {
   eslint: 'eslint -f json',
-  biome: 'biome check --reporter=json',
+  biome: 'biome lint --reporter=json',
   oxc: 'oxlint --format=json',
 };
 
