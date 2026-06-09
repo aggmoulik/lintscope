@@ -1,6 +1,7 @@
 {
   "name": "@lintscope/core",
   "version": "0.0.0",
+  "private": true,
   "description": "Linter adapters and normalization. Supports ESLint, Biome, and oxlint (OXC).",
   "license": "MIT",
   "author": "aggmoulik <qwertymoulik@gmail.com>",

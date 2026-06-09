@@ -1,6 +1,7 @@
 {
   "name": "@lintscope/ui",
   "version": "0.0.0",
+  "private": true,
   "description": "Source-of-truth React components for lintscope. Published to the shadcn registry at lintscope.dev.",
   "license": "MIT",
   "author": "aggmoulik <qwertymoulik@gmail.com>",

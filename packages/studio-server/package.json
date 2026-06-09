@@ -1,6 +1,7 @@
 {
   "name": "@lintscope/studio-server",
   "version": "0.0.0",
+  "private": true,
   "description": "Lint-agnostic framework for the Drizzle-Studio pattern: a local HTTP+CORS+SSE server that a hosted UI connects back to. Designed for standalone publish post-v1.0.",
   "license": "MIT",
   "author": "aggmoulik <qwertymoulik@gmail.com>",
