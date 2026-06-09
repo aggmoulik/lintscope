@@ -13,9 +13,9 @@
  */
 
 import * as Accordion from '@radix-ui/react-accordion';
-import { FileIcon, FolderIcon, FolderOpenIcon, Search } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '../lib/utils';
+import { Icon } from './icon';
 
 type ItemInfo = { label: string; path: string[]; isFolder: boolean };
 
@@ -174,7 +174,11 @@ export function FileTreeSearch({ className, onValueChange, ref, ...props }: File
   const { searchQuery, setSearchQuery } = useFileTree();
   return (
     <div className="relative mb-2">
-      <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400" />
+      <Icon
+        name="search"
+        size={14}
+        className="-translate-y-1/2 absolute top-1/2 left-2 text-ink-faint"
+      />
       <input
         ref={ref}
         type="text"
@@ -184,7 +188,7 @@ export function FileTreeSearch({ className, onValueChange, ref, ...props }: File
           onValueChange?.(e.target.value);
         }}
         className={cn(
-          'w-full rounded-md border border-zinc-200 bg-transparent py-1 pl-7 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500',
+          'w-full rounded-md border border-line bg-transparent py-1 pl-7 pr-3 text-sm text-ink placeholder:text-ink-faint focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-line',
           className,
         )}
         {...props}
@@ -219,19 +223,24 @@ export function Folder({ className, id, label, trailing, children, ref }: Folder
     <PathContext.Provider value={path}>
       <Accordion.Item ref={ref} value={id} className={className}>
         <Accordion.Trigger
-          className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900"
+          className="flex w-full items-center gap-1.5 rounded-md px-1.5 py-[5px] text-left text-[13px] text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
           data-folder-id={id}
         >
-          {isOpen ? (
-            <FolderOpenIcon className="size-4 shrink-0 text-zinc-400" />
-          ) : (
-            <FolderIcon className="size-4 shrink-0 text-zinc-400" />
-          )}
-          <span className="truncate">{label}</span>
+          <Icon
+            name="chevron"
+            size={13}
+            stroke={2}
+            className={cn(
+              'shrink-0 text-ink-faint opacity-60 transition-transform',
+              isOpen && 'rotate-90',
+            )}
+          />
+          <Icon name="folder" size={15} className="shrink-0 text-ink-faint" />
+          <span className="truncate font-mono text-[12px]">{label}</span>
           {trailing != null && <span className="ml-auto flex items-center pl-2">{trailing}</span>}
         </Accordion.Trigger>
         <Accordion.Content className="overflow-hidden data-[state=open]:animate-accordion-down">
-          <div className="ml-2.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+          <div className="ml-2.5 border-l border-line pl-2">
             <Accordion.Root
               type="multiple"
               value={expandedIds}
@@ -274,16 +283,23 @@ export function File({ className, id, label, trailing, icon, ref, ...props }: Fi
       onClick={() => select(id)}
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition-colors',
+        'relative flex w-full items-center gap-1.5 rounded-md px-1.5 py-[5px] text-left text-[13px] transition-colors',
         selected
-          ? 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-          : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-900',
+          ? 'bg-accent-soft text-ink before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:rounded-full before:bg-accent'
+          : 'text-ink-muted hover:bg-surface-2 hover:text-ink',
         className,
       )}
       {...props}
     >
       {icon ?? (
-        <FileIcon className={cn('size-4 shrink-0', selected ? 'text-current' : 'text-zinc-400')} />
+        <>
+          <span aria-hidden className="w-[13px] shrink-0" />
+          <Icon
+            name="file"
+            size={14}
+            className={cn('shrink-0', selected ? 'text-accent' : 'text-ink-faint')}
+          />
+        </>
       )}
       <span className="truncate">{label}</span>
       {trailing != null && <span className="ml-auto flex items-center pl-2">{trailing}</span>}

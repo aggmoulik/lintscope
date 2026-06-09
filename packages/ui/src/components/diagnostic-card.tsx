@@ -7,18 +7,20 @@ import { cn } from '../lib/utils';
 import { AutofixHint } from './autofix-hint';
 import { CodePreview } from './code-preview';
 import { DiffViewer } from './diff-viewer';
+import { Icon } from './icon';
+import { LinterLogo, linterLabel } from './linter-logo';
 import { SeverityBadge } from './severity-badge';
 
 export interface DiagnosticCardProps {
   diagnostic: Diagnostic;
   className?: string;
   onClick?: (diagnostic: Diagnostic) => void;
+  /** When provided, renders a "Dismiss" action that hides the card from view. */
+  onDismiss?: (id: string) => void;
   /**
-   * Optional source fetcher. When provided, the card reveals a toggle that
-   * lazily fetches the file source on click:
-   *   - "View autofix" for ESLint diagnostics with `fix` data → green/red diff
-   *   - "View source" for everything else → CodePreview with the error line
-   *     highlighted in red
+   * Optional source fetcher. When provided, the card lazily fetches the file
+   * source for the inline preview (green/red diff for ESLint autofixes, or a
+   * highlighted code slice otherwise).
    */
   onFetchSource?: (relativePath: string) => Promise<string>;
 }
@@ -33,19 +35,26 @@ export function DiagnosticCard({
   diagnostic,
   className,
   onClick,
+  onDismiss,
   onFetchSource,
 }: DiagnosticCardProps) {
   const hasFix = Boolean(diagnostic.fix);
-  const hasSuggestions = Boolean(diagnostic.suggestions?.length);
-  const showHint = diagnostic.source === 'biome' || diagnostic.source === 'oxc';
+  // Auto-fixable ONLY when the linter actually reports it: ESLint ships inline
+  // `fix` data, Biome sets a `fixable` tag. oxlint's JSON exposes neither, so we
+  // never claim oxc diagnostics are fixable (would be a guess).
+  const fixable = hasFix || diagnostic.fixable === true;
   const canPreview = Boolean(onFetchSource);
   const previewIsAutofix = hasFix && diagnostic.source === 'eslint';
+  // Show the CLI fix command only when the diagnostic IS fixable but we can't
+  // render the green/red inline diff (i.e. not an ESLint inline fix) — e.g. a
+  // fixable Biome rule. Never on oxc (we don't know it's fixable).
+  const showFixCommand =
+    fixable && !previewIsAutofix && (diagnostic.source === 'biome' || diagnostic.source === 'oxc');
+  const fileName = diagnostic.relativePath.split('/').pop() ?? diagnostic.relativePath;
 
   const [preview, setPreview] = useState<PreviewState>({ kind: 'idle' });
+  const [showCode, setShowCode] = useState(true);
 
-  // Fetch the file source on mount when a fetcher is provided. The virtualizer
-  // only mounts visible cards (+ overscan), so this fires once per visible
-  // diagnostic — no eager fetch for off-screen rows.
   useEffect(() => {
     if (!onFetchSource) {
       setPreview({ kind: 'idle' });
@@ -59,16 +68,15 @@ export function DiagnosticCard({
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setPreview({
-            kind: 'error',
-            message: err instanceof Error ? err.message : String(err),
-          });
+          setPreview({ kind: 'error', message: err instanceof Error ? err.message : String(err) });
         }
       });
     return () => {
       cancelled = true;
     };
   }, [diagnostic.relativePath, onFetchSource]);
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
 
   return (
     <article
@@ -88,67 +96,64 @@ export function DiagnosticCard({
       tabIndex={onClick ? 0 : -1}
       role={onClick ? 'button' : undefined}
       className={cn(
-        'group flex w-full flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4 transition-colors dark:border-zinc-800 dark:bg-zinc-950',
+        'group relative flex w-full flex-col overflow-hidden rounded-[14px] border border-line bg-surface p-[18px] shadow-card transition-colors hover:border-line-strong',
         onClick &&
-          'cursor-pointer hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:hover:border-zinc-700 dark:hover:bg-zinc-900',
+          'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
         className,
       )}
     >
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <SeverityBadge severity={diagnostic.severity} />
-          {diagnostic.ruleId ? (
-            diagnostic.url ? (
-              <a
-                href={diagnostic.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="font-mono text-sm text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
-              >
-                {diagnostic.ruleId}
-              </a>
-            ) : (
-              <span className="font-mono text-sm text-zinc-700 dark:text-zinc-300">
-                {diagnostic.ruleId}
-              </span>
-            )
+      <span
+        aria-hidden
+        className={cn(
+          'absolute inset-y-0 left-0 w-[3px]',
+          diagnostic.severity === 'error'
+            ? 'bg-error'
+            : diagnostic.severity === 'warning'
+              ? 'bg-warning'
+              : 'bg-violet',
+        )}
+      />
+      <header className="flex flex-wrap items-center gap-2.5">
+        <SeverityBadge severity={diagnostic.severity} />
+        {diagnostic.ruleId ? (
+          diagnostic.url ? (
+            <a
+              href={diagnostic.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={stop}
+              className="font-mono text-[13px] font-medium text-ink transition-colors hover:text-accent"
+            >
+              {diagnostic.ruleId}
+            </a>
           ) : (
-            <span className="font-mono text-sm text-zinc-500 italic dark:text-zinc-500">
-              parser-error
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {hasFix && (
-            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-400/30">
-              fixable
-            </span>
-          )}
-          {!hasFix && hasSuggestions && (
-            <span className="rounded bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-indigo-700 ring-1 ring-inset ring-indigo-600/20 dark:bg-indigo-950/40 dark:text-indigo-300 dark:ring-indigo-400/30">
-              suggested
-            </span>
-          )}
-          {showHint && <AutofixHint source={diagnostic.source as 'biome' | 'oxc'} />}
-        </div>
+            <span className="font-mono text-[13px] font-medium text-ink">{diagnostic.ruleId}</span>
+          )
+        ) : (
+          <span className="font-mono text-[13px] text-ink-faint italic">parser-error</span>
+        )}
+        <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-faint">
+          <LinterLogo source={diagnostic.source} size={14} />
+          {linterLabel(diagnostic.source)}
+        </span>
+        <div className="flex-1" />
+        {fixable && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-ok-bg px-2.5 py-[3px] text-[11.5px] font-medium text-ok ring-1 ring-ok/25 ring-inset">
+            <Icon name="zap" size={11} stroke={2} className="text-ok" />
+            Auto-fixable
+          </span>
+        )}
       </header>
 
-      <p className="text-sm leading-relaxed text-zinc-900 dark:text-zinc-100">
+      <p className="mt-3 mb-3.5 max-w-[70ch] text-[14.5px] leading-relaxed text-ink">
         {diagnostic.message}
       </p>
 
-      {canPreview && (
-        // Always visible — clicks inside the panel intentionally bubble to the
-        // article's onClick (if any); the panel has no interactive content.
+      {canPreview && showCode && (
         <div className="text-xs" data-testid="preview-panel">
-          {preview.kind === 'loading' && (
-            <p className="text-zinc-500 dark:text-zinc-400">Loading source…</p>
-          )}
+          {preview.kind === 'loading' && <p className="text-ink-faint">Loading source…</p>}
           {preview.kind === 'error' && (
-            <p className="text-red-600 dark:text-red-400">
-              Couldn't load source: {preview.message}
-            </p>
+            <p className="text-error">Couldn't load source: {preview.message}</p>
           )}
           {preview.kind === 'ready' &&
             (previewIsAutofix && diagnostic.fix ? (
@@ -165,24 +170,58 @@ export function DiagnosticCard({
               <CodePreview
                 source={preview.source}
                 line={diagnostic.line}
-                {...(diagnostic.endLine !== undefined ? { endLine: diagnostic.endLine } : {})}
+                column={diagnostic.column}
                 fileName={diagnostic.relativePath}
+                {...(diagnostic.endLine !== undefined ? { endLine: diagnostic.endLine } : {})}
               />
             ))}
         </div>
       )}
 
-      <footer className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-500">
-        <span className="font-mono">
-          {diagnostic.relativePath}
-          <span className="text-zinc-400">
+      <footer className="mt-3.5 flex flex-wrap items-center gap-3 text-[12.5px] text-ink-muted">
+        {canPreview && (
+          <button
+            type="button"
+            onClick={(e) => {
+              stop(e);
+              setShowCode((v) => !v);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-[6px] px-1.5 py-1 transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            <Icon
+              name="chevron"
+              size={13}
+              stroke={2}
+              style={{
+                transform: showCode ? 'rotate(90deg)' : 'none',
+                transition: 'transform .15s',
+              }}
+            />
+            {showCode ? 'Hide code' : 'Show code'}
+          </button>
+        )}
+        <span className="inline-flex items-center gap-1.5 font-mono text-[11.5px] text-ink-faint">
+          <Icon name="file" size={12} />
+          {fileName}
+          <span className="text-accent">
             :{diagnostic.line}:{diagnostic.column}
           </span>
         </span>
-        <span aria-hidden className="text-zinc-300 dark:text-zinc-700">
-          ·
-        </span>
-        <span className="font-mono uppercase tracking-wider">{diagnostic.source}</span>
+        <div className="flex-1" />
+        {showFixCommand && <AutofixHint source={diagnostic.source as 'biome' | 'oxc'} />}
+        {onDismiss && (
+          <button
+            type="button"
+            onClick={(e) => {
+              stop(e);
+              onDismiss(diagnostic.id);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-[6px] px-1.5 py-1 transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            <Icon name="x" size={13} stroke={2} />
+            Dismiss
+          </button>
+        )}
       </footer>
     </article>
   );

@@ -175,36 +175,11 @@ function StudioBody({ connection }: { connection: StudioConnection }) {
     );
   }
 
-  // state.kind === 'ready'
+  // state.kind === 'ready' — LintDashboard owns the full chrome (top bar + shell).
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
-            {state.init.name} · studio
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight">Lint diagnostics</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-500">
-            {state.init.linters.map((l) => `${l.name}@${l.version}`).join(', ')}
-            {state.init.capabilities.watch && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-400/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                watching
-              </span>
-            )}
-            {!state.init.capabilities.scan && (
-              <span className="ml-2 inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 ring-1 ring-inset ring-zinc-500/20 dark:bg-zinc-900 dark:text-zinc-400 dark:ring-zinc-400/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                render-only
-              </span>
-            )}
-          </p>
-        </div>
-      </header>
-      <LintDashboard
-        report={state.report}
-        {...(state.init.capabilities.file ? { onFetchSource: fetchSource } : {})}
-      />
-    </div>
+    <LintDashboard
+      report={state.report}
+      {...(state.init.capabilities.file ? { onFetchSource: fetchSource } : {})}
+    />
   );
 }

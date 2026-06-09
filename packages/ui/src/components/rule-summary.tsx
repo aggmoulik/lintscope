@@ -92,9 +92,9 @@ export interface RuleSummaryProps {
 }
 
 const severityDotClass: Record<Severity, string> = {
-  error: 'bg-red-500',
-  warning: 'bg-amber-500',
-  info: 'bg-blue-500',
+  error: 'bg-error',
+  warning: 'bg-warning',
+  info: 'bg-violet',
 };
 
 export function RuleSummary({
@@ -110,7 +110,7 @@ export function RuleSummary({
     return (
       <div
         className={cn(
-          'rounded-lg border border-dashed border-zinc-200 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500',
+          'rounded-[9px] border border-line border-dashed p-6 text-sm text-ink-faint',
           className,
         )}
       >
@@ -122,10 +122,7 @@ export function RuleSummary({
   return (
     <section
       aria-label="Rules"
-      className={cn(
-        'overflow-auto rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950',
-        className,
-      )}
+      className={cn('overflow-auto rounded-[9px] border border-line bg-surface p-2', className)}
       data-testid="rule-summary"
     >
       <ul className="flex flex-col">
@@ -147,10 +144,10 @@ export function RuleSummary({
                 type="button"
                 onClick={handleClick}
                 className={cn(
-                  'flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                  'flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition-colors',
                   selected
-                    ? 'bg-zinc-900 text-zinc-100 hover:bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-100'
-                    : 'text-zinc-800 dark:text-zinc-200',
+                    ? 'bg-accent-soft text-ink'
+                    : 'text-ink-muted hover:bg-surface-2 hover:text-ink',
                 )}
                 data-rule-id={stat.ruleId ?? ''}
                 data-severity={stat.dominantSeverity}
@@ -166,7 +163,7 @@ export function RuleSummary({
                 <span
                   className={cn(
                     'truncate font-mono',
-                    stat.ruleId === null ? 'italic text-zinc-500' : '',
+                    stat.ruleId === null ? 'italic text-ink-faint' : '',
                   )}
                 >
                   {label}
@@ -174,9 +171,7 @@ export function RuleSummary({
                 <span
                   className={cn(
                     'ml-auto rounded-full px-2 py-0.5 font-mono text-[10px] tabular-nums',
-                    selected
-                      ? 'bg-current/15'
-                      : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300',
+                    selected ? 'bg-accent/15 text-accent' : 'bg-surface-3 text-ink-muted',
                   )}
                 >
                   {stat.count}

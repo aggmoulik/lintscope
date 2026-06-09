@@ -16,6 +16,7 @@
     "@lintscope/api-schema": "workspace:*",
     "@lintscope/schema": "workspace:*",
     "@lintscope/ui": "workspace:*",
+    "geist": "^1.7.2",
     "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6",

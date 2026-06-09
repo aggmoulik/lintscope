@@ -162,9 +162,9 @@ function pairLinesForSplit(lines: ParsedLine[]): SplitLinePair[] {
 const diffViewerVariants = cva('overflow-hidden rounded-lg font-mono text-sm', {
   variants: {
     variant: {
-      default: 'border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950',
+      default: 'border border-line bg-code',
       ghost: 'bg-transparent',
-      muted: 'border border-zinc-300/40 bg-zinc-100 dark:border-zinc-700/40 dark:bg-zinc-900',
+      muted: 'border border-line bg-surface-2',
     },
     size: {
       sm: 'text-xs',
@@ -218,7 +218,7 @@ function DiffViewerFileBadge({ filename }: { filename?: string | undefined }) {
   return (
     <span
       data-slot="diff-viewer-file-badge"
-      className="inline-flex size-5 shrink-0 items-end justify-end rounded-sm border border-zinc-200 bg-white text-[8px] font-bold leading-none dark:border-zinc-800 dark:bg-zinc-950"
+      className="inline-flex size-5 shrink-0 items-end justify-end rounded-sm border border-line bg-code text-[8px] font-bold leading-none"
     >
       <span className="p-0.5">{ext}</span>
     </span>
@@ -269,7 +269,7 @@ function DiffViewerHeader({
     <div
       data-slot="diff-viewer-header"
       className={cn(
-        'flex items-center gap-2 border-b border-zinc-200 bg-zinc-100 px-4 py-2 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400',
+        'flex items-center gap-2 border-b border-line bg-surface-2 px-4 py-2 text-ink-muted',
         className,
       )}
       {...props}
@@ -315,7 +315,7 @@ function DiffViewerLine({
       {showLineNumbers && (
         <span
           data-slot="diff-viewer-line-number"
-          className="w-12 shrink-0 select-none px-2 text-end text-zinc-400 dark:text-zinc-500"
+          className="w-12 shrink-0 select-none px-2 text-end text-ink-faint"
         >
           {line.type === 'del'
             ? line.oldLineNumber
@@ -364,12 +364,12 @@ function DiffViewerSplitLine({
         data-slot="diff-viewer-split-left"
         data-type={left?.type ?? 'empty'}
         className={cn(
-          'flex w-1/2 border-e border-zinc-200 dark:border-zinc-800',
+          'flex w-1/2 border-e border-line',
           diffLineVariants({ type: left?.type ?? 'empty' }),
         )}
       >
         {showLineNumbers && (
-          <span className="w-12 shrink-0 select-none px-2 text-end text-zinc-400 dark:text-zinc-500">
+          <span className="w-12 shrink-0 select-none px-2 text-end text-ink-faint">
             {left?.oldLineNumber ?? ''}
           </span>
         )}
@@ -396,7 +396,7 @@ function DiffViewerSplitLine({
         className={cn('flex w-1/2', diffLineVariants({ type: right?.type ?? 'empty' }))}
       >
         {showLineNumbers && (
-          <span className="w-12 shrink-0 select-none px-2 text-end text-zinc-400 dark:text-zinc-500">
+          <span className="w-12 shrink-0 select-none px-2 text-end text-ink-faint">
             {right?.newLineNumber ?? ''}
           </span>
         )}
@@ -468,10 +468,7 @@ function DiffViewer({
     return (
       <pre
         data-slot="diff-viewer"
-        className={cn(
-          'rounded-lg bg-zinc-100 p-4 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400',
-          className,
-        )}
+        className={cn('rounded-lg bg-surface-2 p-4 text-ink-muted', className)}
       >
         No diff content provided
       </pre>

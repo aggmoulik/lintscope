@@ -2,19 +2,87 @@
 
 /*
  * @lintscope/ui resolves through node_modules (transpilePackages), which
- * Tailwind v4's automatic content detection ignores. Without this, none of
- * the component utility classes are generated and the dashboard renders
- * completely unstyled. Scan the package source explicitly.
+ * Tailwind v4's automatic content detection ignores. Scan the source so the
+ * component utility classes get generated.
  */
 @source "../../../../packages/ui/src";
 
+/*
+ * Warm "Claude" theme tokens — clay/terracotta accent on warm neutrals.
+ * Light values are the @theme defaults; `.dark` overrides them. Components use
+ * the semantic utilities these generate (bg-surface, text-ink, text-accent, …).
+ */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-canvas: hsl(44 32% 96%);
+  --color-surface: hsl(42 44% 99%);
+  --color-surface-2: hsl(42 30% 96.5%);
+  --color-surface-3: hsl(40 26% 92.5%);
+  --color-code: hsl(44 34% 97.5%);
+  --color-line: hsl(30 25% 14% / 0.1);
+  --color-line-strong: hsl(30 25% 14% / 0.17);
+  --color-ink: hsl(28 16% 15%);
+  --color-ink-muted: hsl(30 9% 42%);
+  --color-ink-faint: hsl(30 8% 56%);
+  --color-accent: color-mix(in srgb, hsl(15 60% 60%) 74%, #2a1308);
+  --color-accent-soft: hsl(15 60% 60% / 0.13);
+  --color-accent-line: color-mix(in srgb, hsl(15 60% 60%) 38%, transparent);
+  --color-error: hsl(2 66% 50%);
+  --color-error-bg: hsl(2 70% 56% / 0.11);
+  --color-error-line: hsl(2 70% 56% / 0.45);
+  --color-warning: hsl(36 78% 44%);
+  --color-warning-bg: hsl(42 88% 52% / 0.16);
+  --color-warning-line: hsl(40 82% 50% / 0.4);
+  --color-ok: hsl(152 56% 36%);
+  --color-ok-bg: hsl(152 50% 46% / 0.13);
+  --color-violet: hsl(276 50% 50%);
+
+  --shadow-card: 0 1px 2px hsl(30 25% 25% / 0.05), 0 14px 34px -20px hsl(30 30% 30% / 0.22);
 
   /* Drives the <FileTree /> folder expand animation (Radix accordion). */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+.dark {
+  --color-canvas: hsl(30 9% 9%);
+  --color-surface: hsl(32 8% 12%);
+  --color-surface-2: hsl(32 7% 15.5%);
+  --color-surface-3: hsl(32 7% 19%);
+  --color-code: hsl(30 9% 10.5%);
+  --color-line: hsl(40 30% 100% / 0.08);
+  --color-line-strong: hsl(40 30% 100% / 0.14);
+  --color-ink: hsl(40 18% 95%);
+  --color-ink-muted: hsl(38 9% 66%);
+  --color-ink-faint: hsl(36 8% 48%);
+  --color-accent: hsl(15 60% 60%);
+  --color-accent-soft: hsl(15 60% 60% / 0.14);
+  --color-accent-line: hsl(15 60% 60% / 0.4);
+  --color-error: hsl(2 75% 64%);
+  --color-error-bg: hsl(2 75% 64% / 0.13);
+  --color-error-line: hsl(2 75% 64% / 0.5);
+  --color-warning: hsl(42 86% 60%);
+  --color-warning-bg: hsl(42 86% 60% / 0.13);
+  --color-warning-line: hsl(42 86% 60% / 0.45);
+  --color-ok: hsl(152 52% 52%);
+  --color-ok-bg: hsl(152 52% 52% / 0.13);
+  --color-violet: hsl(280 50% 70%);
+
+  --shadow-card: 0 1px 0 hsl(0 0% 100% / 0.04) inset, 0 18px 40px -22px hsl(0 0% 0% / 0.7);
+}
+
+/* Warm canvas + a soft radial accent glow for the studio surface. */
+.lintscope-surface {
+  background-color: var(--color-canvas);
+  background-image: radial-gradient(
+    1200px 600px at 78% -10%,
+    color-mix(in srgb, var(--color-accent) 14%, transparent),
+    transparent 60%
+  );
+  background-attachment: fixed;
+  color: var(--color-ink);
 }
 
 @keyframes accordion-down {

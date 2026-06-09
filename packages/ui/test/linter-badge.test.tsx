@@ -13,22 +13,22 @@ describe('<LinterBadge />', () => {
     expect(screen.getByText('biome').getAttribute('data-linter')).toBe('biome');
   });
 
-  it('applies a distinct color class per known source', () => {
+  it('applies a source-specific color class per known linter', () => {
     const { rerender } = render(<LinterBadge source="eslint" />);
     expect(screen.getByText('eslint').className).toMatch(/violet/);
     rerender(<LinterBadge source="biome" />);
-    expect(screen.getByText('biome').className).toMatch(/pink/);
+    expect(screen.getByText('biome').className).toMatch(/ok/);
     rerender(<LinterBadge source="oxc" />);
-    expect(screen.getByText('oxc').className).toMatch(/orange/);
+    expect(screen.getByText('oxc').className).toMatch(/accent/);
     rerender(<LinterBadge source="tsc" />);
-    expect(screen.getByText('tsc').className).toMatch(/sky/);
+    expect(screen.getByText('tsc').className).toMatch(/violet/);
     rerender(<LinterBadge source="stylelint" />);
-    expect(screen.getByText('stylelint').className).toMatch(/teal/);
+    expect(screen.getByText('stylelint').className).toMatch(/ok/);
   });
 
-  it('falls back to a neutral zinc class for unknown sources', () => {
+  it('falls back to a neutral class for unknown sources', () => {
     render(<LinterBadge source="someday-linter" />);
-    expect(screen.getByText('someday-linter').className).toMatch(/zinc/);
+    expect(screen.getByText('someday-linter').className).toMatch(/surface-3/);
   });
 
   it('renders custom children when provided', () => {

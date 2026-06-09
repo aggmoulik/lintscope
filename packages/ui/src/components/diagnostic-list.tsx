@@ -42,7 +42,7 @@ export function DiagnosticList({
     return (
       <div
         className={cn(
-          'flex items-center justify-center rounded-lg border border-dashed border-zinc-200 p-12 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500',
+          'flex items-center justify-center rounded-[14px] border border-line border-dashed p-12 text-sm text-ink-faint',
           className,
         )}
         style={typeof height === 'number' ? { height } : { height }}

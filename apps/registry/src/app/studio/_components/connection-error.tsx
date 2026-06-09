@@ -28,21 +28,21 @@ export function ConnectionError({
   };
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-4 rounded-lg border border-red-200 bg-red-50 p-6 text-sm dark:border-red-900/40 dark:bg-red-950/40">
+    <div className="mx-auto flex max-w-xl flex-col gap-4 rounded-[14px] border border-error-line bg-error-bg p-6 text-sm">
       <div>
-        <p className="text-base font-semibold text-red-900 dark:text-red-200">{title}</p>
-        <p className="mt-1 text-red-800 dark:text-red-300">{message}</p>
-        {hint && <p className="mt-2 text-xs text-red-700/80 dark:text-red-300/70">{hint}</p>}
+        <p className="text-base font-semibold text-error">{title}</p>
+        <p className="mt-1 text-ink">{message}</p>
+        {hint && <p className="mt-2 text-xs text-ink-muted">{hint}</p>}
       </div>
       {showCommand && (
         <div className="flex items-center gap-2">
-          <code className="flex-1 overflow-x-auto rounded bg-zinc-900 px-3 py-2 font-mono text-xs text-zinc-100">
+          <code className="flex-1 overflow-x-auto rounded bg-surface-3 px-3 py-2 font-mono text-xs text-ink">
             {COMMAND}
           </code>
           <button
             type="button"
             onClick={copyCommand}
-            className="rounded-md border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-900 hover:bg-red-100 dark:border-red-900/40 dark:bg-zinc-900 dark:text-red-200 dark:hover:bg-red-950/40"
+            className="rounded-md border border-line bg-surface px-3 py-2 text-xs font-medium text-ink hover:bg-surface-2"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>

@@ -49,64 +49,62 @@ const REPORT: LintReport = {
   },
 };
 
-describe('<LintDashboard /> v2', () => {
-  it('renders the header with the linter + counts', () => {
+describe('<LintDashboard /> layout', () => {
+  it('renders the top bar with the project brand + search', () => {
     render(<LintDashboard report={REPORT} />);
-    const header = screen.getByTestId('dashboard-header');
-    expect(within(header).getByText(/eslint@9\.15\.0/)).toBeDefined();
-    expect(within(header).getByText('errors')).toBeDefined();
-    expect(within(header).getByText('warnings')).toBeDefined();
-    expect(within(header).getByText('fixable')).toBeDefined();
+    const topbar = screen.getByTestId('dashboard-topbar');
+    expect(within(topbar).getByText('lintscope')).toBeDefined();
+    expect(within(topbar).getByText('repo')).toBeDefined(); // projectRoot basename
+    expect(screen.getByTestId('open-palette-button')).toBeDefined();
   });
 
-  it('renders FileTree, RuleSummary, and the DiagnosticList side by side', () => {
+  it('renders the sidebar stat tiles (errors / warnings / auto-fixable / files)', () => {
+    render(<LintDashboard report={REPORT} />);
+    const tiles = screen.getByTestId('stat-tiles');
+    expect(within(tiles).getByText('Errors')).toBeDefined();
+    expect(within(tiles).getByText('Warnings')).toBeDefined();
+    expect(within(tiles).getByText('Auto-fixable')).toBeDefined();
+    expect(within(tiles).getByText('Files affected')).toBeDefined();
+  });
+
+  it('renders the FileTree and the grouped diagnostic feed', () => {
     render(<LintDashboard report={REPORT} />);
     expect(screen.getByTestId('file-tree')).toBeDefined();
-    expect(screen.getByTestId('rule-summary')).toBeDefined();
-    expect(screen.getByTestId('diagnostic-list-scroll')).toBeDefined();
+    expect(screen.getByTestId('diagnostic-feed')).toBeDefined();
+    // default group-by = file → group headers, no flat virtualized scroller
+    expect(screen.getByTestId('diagnostic-feed').textContent).toContain('of 3 shown');
   });
 
-  it('filters diagnostics when a FileTree row is clicked', () => {
+  it('scopes the feed when a FileTree row is clicked (and shows a scope pill)', () => {
     render(<LintDashboard report={REPORT} />);
-    const fileTree = screen.getByTestId('file-tree');
-    fireEvent.click(within(fileTree).getByText('b.ts'));
-    expect(screen.getByTestId('filter-pills').textContent).toContain('file: src/b.ts');
+    const tree = screen.getByTestId('file-tree');
+    // `src` holds only files → collapsed by default; expand it first.
+    fireEvent.click(within(tree).getByText('src'));
+    fireEvent.click(within(tree).getByText('b.ts'));
+    const pill = screen.getByTestId('scope-pill');
+    expect(pill.textContent).toContain('src/b.ts');
+    expect(screen.getByTestId('diagnostic-feed').textContent).toContain('1 of 3 shown');
   });
 
-  it('toggles file filter off when the same file is clicked again', () => {
+  it('toggles the file scope off when the same file is clicked again', () => {
     render(<LintDashboard report={REPORT} />);
-    const fileTree = screen.getByTestId('file-tree');
-    fireEvent.click(within(fileTree).getByText('b.ts'));
-    expect(screen.queryByTestId('filter-pills')).not.toBeNull();
-    fireEvent.click(within(fileTree).getByText('b.ts'));
-    expect(screen.queryByTestId('filter-pills')).toBeNull();
+    const tree = screen.getByTestId('file-tree');
+    fireEvent.click(within(tree).getByText('src'));
+    fireEvent.click(within(tree).getByText('b.ts'));
+    expect(screen.queryByTestId('scope-pill')).not.toBeNull();
+    fireEvent.click(within(tree).getByText('b.ts'));
+    expect(screen.queryByTestId('scope-pill')).toBeNull();
   });
 
-  it('filters by rule when a RuleSummary row is clicked', () => {
+  it('regroups the feed via the group-by control', () => {
     render(<LintDashboard report={REPORT} />);
-    const ruleSummary = screen.getByTestId('rule-summary');
-    fireEvent.click(within(ruleSummary).getByText('no-console'));
-    expect(screen.getByTestId('filter-pills').textContent).toContain('rule: no-console');
+    fireEvent.click(screen.getByTestId('diagnostic-feed').querySelector('[data-groupby="rule"]')!);
+    // grouped by rule → both rule names appear as group headers
+    expect(screen.getAllByText('no-console').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('prefer-const').length).toBeGreaterThan(0);
   });
 
-  it('clears a single filter when its pill is clicked', () => {
-    render(<LintDashboard report={REPORT} />);
-    const ruleSummary = screen.getByTestId('rule-summary');
-    fireEvent.click(within(ruleSummary).getByText('no-console'));
-    const pill = screen.getByTestId('filter-pills').querySelector('[data-pill="ruleId"]');
-    expect(pill).not.toBeNull();
-    if (pill) fireEvent.click(pill);
-    expect(screen.queryByTestId('filter-pills')).toBeNull();
-  });
-
-  it('shows a "showing X of Y" indicator when filtered', () => {
-    render(<LintDashboard report={REPORT} />);
-    const ruleSummary = screen.getByTestId('rule-summary');
-    fireEvent.click(within(ruleSummary).getByText('prefer-const'));
-    expect(screen.getByText(/showing 1 of 3/)).toBeDefined();
-  });
-
-  it('opens the command palette when the ⌘K button is clicked', () => {
+  it('opens the command palette when the search button is clicked', () => {
     render(<LintDashboard report={REPORT} />);
     expect(screen.queryByTestId('command-palette')).toBeNull();
     fireEvent.click(screen.getByTestId('open-palette-button'));
@@ -134,30 +132,29 @@ const MULTI_REPORT: LintReport = {
 };
 
 describe('<LintDashboard /> multi-linter', () => {
-  it('shows no linter-filter row when only one linter ran', () => {
+  it('shows no LINTERS section when only one linter ran', () => {
     render(<LintDashboard report={REPORT} />);
     expect(screen.queryByTestId('linter-filter')).toBeNull();
   });
 
-  it('renders a linter-filter row with one badge per linter and its diagnostic count', () => {
+  it('renders a LINTERS row with one tag per linter and its diagnostic count', () => {
     render(<LintDashboard report={MULTI_REPORT} />);
     const row = screen.getByTestId('linter-filter');
-    expect(within(row).getByText(/eslint · 1/)).toBeDefined();
-    expect(within(row).getByText(/oxc · 2/)).toBeDefined();
+    // Tags show the brand-cased name (ESLint / OXC) + the per-linter count.
+    const eslintTag = row.querySelector('[data-linter-filter="eslint"]');
+    expect(eslintTag?.textContent).toContain('ESLint');
+    expect(eslintTag?.textContent).toContain('1');
+    const oxcTag = row.querySelector('[data-linter-filter="oxc"]');
+    expect(oxcTag?.textContent).toContain('OXC');
+    expect(oxcTag?.textContent).toContain('2');
   });
 
-  it('filters diagnostics by linter when a badge is clicked', () => {
+  it('filters diagnostics by linter when a tag is clicked', () => {
     render(<LintDashboard report={MULTI_REPORT} />);
     const row = screen.getByTestId('linter-filter');
     const oxcBtn = row.querySelector('[data-linter-filter="oxc"]');
     expect(oxcBtn).not.toBeNull();
     if (oxcBtn) fireEvent.click(oxcBtn);
-    expect(screen.getByTestId('filter-pills').textContent).toContain('linter: oxc');
-    expect(screen.getByText(/showing 2 of 3/)).toBeDefined();
+    expect(screen.getByTestId('diagnostic-feed').textContent).toContain('2 of 3 shown');
   });
 });
-
-// Note: the previous "right-side DiffPreview panel" tests were removed when
-// LintDashboard stopped rendering that panel — every diagnostic card now
-// renders its own inline preview (DiffViewer for autofixes, CodePreview
-// otherwise) via the `onFetchSource` prop. See diagnostic-card.tsx.

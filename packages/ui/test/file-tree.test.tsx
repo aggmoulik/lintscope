@@ -38,41 +38,42 @@ describe('<FileTree />', () => {
     expect(buttons.some((b) => b.textContent?.includes('readme.md'))).toBe(true);
   });
 
-  it('rolls up counts into parent folders, shown as color dots (not numbers)', () => {
+  it('rolls up counts into parent folders, shown as a single severity dot', () => {
     render(<FileTree files={sample} />);
     const srcButton = screen.getByText('src').closest('button');
-    // Folders show only color dots: red (errors present) + amber (warnings present).
+    // Each row shows ONE dot: red when any nested errors (src has 4 errors).
     expect(srcButton?.querySelector('[data-severity="error"]')).not.toBeNull();
-    expect(srcButton?.querySelector('[data-severity="warning"]')).not.toBeNull();
-    // The rolled-up counts (1+0+3 = 4 errors · 0+2+1 = 3 warnings) stay in the DOM
-    // as screen-reader-only text for accessibility.
+    // The rolled-up counts (4 errors · 3 warnings) stay in the DOM as sr-only text.
     expect(srcButton?.textContent).toContain('4');
     expect(srcButton?.textContent).toContain('3');
   });
 
-  it('shows numeric counts on file rows (not dots)', () => {
+  it('shows a single severity dot on file rows', () => {
     render(<FileTree files={sample} />);
     const fooRow = screen.getByText('foo.ts').closest('button');
-    // foo.ts has 1 error, 0 warnings → numeric badge, no severity dots.
-    expect(fooRow?.querySelector('[data-severity]')).toBeNull();
+    // foo.ts has 1 error → a single red severity dot (sr-only count kept).
+    expect(fooRow?.querySelector('[data-severity="error"]')).not.toBeNull();
     expect(fooRow?.textContent).toContain('1');
   });
 
-  it('expands all folders by default so every file is visible on first render', () => {
+  it('expands structural folders by default but collapses leaf (file-only) folders', () => {
     render(<FileTree files={sample} />);
+    // `src` has a subfolder (`util`) → expanded; its direct files show.
     expect(screen.getByText('foo.ts')).toBeDefined();
     expect(screen.getByText('bar.ts')).toBeDefined();
-    expect(screen.getByText('helpers.ts')).toBeDefined();
+    // `util` holds only files → collapsed, so helpers.ts is hidden initially.
+    expect(screen.queryByText('helpers.ts')).toBeNull();
   });
 
-  it('collapses a folder when its header is clicked', () => {
+  it('expands a collapsed leaf folder when its header is clicked', () => {
     render(<FileTree files={sample} />);
     const utilFolder = screen.getAllByRole('button').find((b) => b.textContent?.includes('util'));
     expect(utilFolder).toBeDefined();
     if (!utilFolder) return;
-    expect(screen.getByText('helpers.ts')).toBeDefined();
-    fireEvent.click(utilFolder);
+    // util is collapsed by default → helpers.ts hidden; clicking expands it.
     expect(screen.queryByText('helpers.ts')).toBeNull();
+    fireEvent.click(utilFolder);
+    expect(screen.getByText('helpers.ts')).toBeDefined();
   });
 
   it('fires onSelect with the original FileEntry when a file is clicked', () => {
@@ -115,6 +116,9 @@ describe('<FileTree />', () => {
         ]}
       />,
     );
+    // `src` is a leaf folder (only a file) → collapsed by default; expand it.
+    const srcFolder = screen.getByText('src').closest('button');
+    if (srcFolder) fireEvent.click(srcFolder);
     expect(screen.getByText('windows.ts')).toBeDefined();
   });
 });

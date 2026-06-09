@@ -13,7 +13,33 @@ export interface CodePreviewProps {
   contextLines?: number;
   /** Optional file name rendered in the header. */
   fileName?: string;
+  /** 1-based column of the diagnostic — shown in the header next to the line. */
+  column?: number;
   className?: string;
+}
+
+const LANG_BY_EXT: Record<string, string> = {
+  ts: 'TS',
+  tsx: 'TSX',
+  mts: 'TS',
+  cts: 'TS',
+  js: 'JS',
+  jsx: 'JSX',
+  mjs: 'JS',
+  cjs: 'JS',
+  json: 'JSON',
+  css: 'CSS',
+  scss: 'SCSS',
+  html: 'HTML',
+  md: 'MD',
+  mdx: 'MDX',
+  vue: 'VUE',
+  svelte: 'SV',
+};
+
+function langFromName(name: string): string {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  return LANG_BY_EXT[ext] ?? (ext ? ext.toUpperCase() : 'TXT');
 }
 
 interface RenderLine {
@@ -56,6 +82,7 @@ export function CodePreview({
   endLine,
   contextLines = 4,
   fileName,
+  column,
   className,
 }: CodePreviewProps) {
   const lines = selectLines(source, line, endLine ?? line, contextLines);
@@ -65,13 +92,22 @@ export function CodePreview({
       data-testid="code-preview"
       data-error-line={line}
       className={cn(
-        'overflow-hidden rounded-lg border border-zinc-200 bg-white font-mono text-xs dark:border-zinc-800 dark:bg-zinc-950',
+        'overflow-hidden rounded-[9px] border border-line bg-code font-mono text-xs text-ink',
         className,
       )}
     >
       {fileName && (
-        <div className="border-b border-zinc-200 bg-zinc-100 px-3 py-1.5 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          {fileName}:{line}
+        <div className="flex items-center justify-between gap-2 border-b border-line bg-surface-2 px-3 py-1.5">
+          <span className="truncate text-ink-muted">
+            {fileName}
+            <span className="text-accent">
+              :{line}
+              {column !== undefined && `:${column}`}
+            </span>
+          </span>
+          <span className="shrink-0 rounded bg-surface-3 px-1.5 py-0.5 text-[10px] text-ink-faint">
+            {langFromName(fileName)}
+          </span>
         </div>
       )}
       <div className="overflow-x-auto">
@@ -80,12 +116,15 @@ export function CodePreview({
             key={number}
             data-line-number={number}
             data-error={isError || undefined}
-            className={cn('flex', isError && 'bg-red-500/10')}
+            className={cn(
+              'flex',
+              isError && 'bg-error-bg shadow-[inset_2px_0_0_var(--color-error)]',
+            )}
           >
             <span
               className={cn(
                 'w-10 shrink-0 select-none px-2 text-end',
-                isError ? 'text-red-700 dark:text-red-400' : 'text-zinc-400 dark:text-zinc-500',
+                isError ? 'text-error' : 'text-ink-faint',
               )}
             >
               {number}
@@ -93,20 +132,13 @@ export function CodePreview({
             <span
               aria-hidden
               className={cn(
-                'w-4 shrink-0 select-none text-center',
-                isError && 'text-red-700 dark:text-red-400',
+                'w-4 shrink-0 select-none text-center font-bold',
+                isError && 'text-error',
               )}
             >
-              {isError ? '✕' : ' '}
+              {isError ? '›' : ' '}
             </span>
-            <span
-              className={cn(
-                'flex-1 whitespace-pre-wrap break-all',
-                isError && 'text-red-700 dark:text-red-400',
-              )}
-            >
-              {text}
-            </span>
+            <span className="flex-1 whitespace-pre-wrap break-all">{text}</span>
           </div>
         ))}
       </div>

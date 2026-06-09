@@ -12,20 +12,16 @@ import { cn } from '../lib/utils';
  */
 
 const badgeStyles = cva(
-  'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider ring-1 ring-inset',
+  'inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider',
   {
     variants: {
       tone: {
-        eslint:
-          'bg-violet-50 text-violet-700 ring-violet-600/20 dark:bg-violet-950/40 dark:text-violet-300 dark:ring-violet-400/30',
-        biome:
-          'bg-pink-50 text-pink-700 ring-pink-600/20 dark:bg-pink-950/40 dark:text-pink-300 dark:ring-pink-400/30',
-        oxc: 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-950/40 dark:text-orange-300 dark:ring-orange-400/30',
-        tsc: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-400/30',
-        stylelint:
-          'bg-teal-50 text-teal-700 ring-teal-600/20 dark:bg-teal-950/40 dark:text-teal-300 dark:ring-teal-400/30',
-        _unknown:
-          'bg-zinc-100 text-zinc-700 ring-zinc-500/20 dark:bg-zinc-900 dark:text-zinc-300 dark:ring-zinc-500/30',
+        eslint: 'bg-violet/12 text-violet',
+        biome: 'bg-ok-bg text-ok',
+        oxc: 'bg-accent-soft text-accent',
+        tsc: 'bg-violet/12 text-violet',
+        stylelint: 'bg-ok-bg text-ok',
+        _unknown: 'bg-surface-3 text-ink-muted',
       },
     },
     defaultVariants: { tone: '_unknown' },

@@ -18,10 +18,13 @@ const sample: Diagnostic = {
 
 describe('<DiagnosticCard />', () => {
   it('shows rule id, message, and location', () => {
-    render(<DiagnosticCard diagnostic={sample} />);
+    const { container } = render(<DiagnosticCard diagnostic={sample} />);
     expect(screen.getByText('no-unused-vars')).toBeDefined();
     expect(screen.getByText("'foo' is defined but never used.")).toBeDefined();
-    expect(screen.getByText(/src\/foo\.ts/).textContent).toContain(':12:3');
+    // The foot shows the short filename + location (the full path lives in the
+    // code-block header, which only renders when a source fetcher is provided).
+    expect(container.textContent).toContain('foo.ts');
+    expect(container.textContent).toContain(':12:3');
   });
 
   it('renders rule id as a link when url is provided', () => {
@@ -30,21 +33,19 @@ describe('<DiagnosticCard />', () => {
     expect(link.href).toBe('https://eslint.org/docs/rules/no-unused-vars');
   });
 
-  it('shows a "fixable" indicator when fix is present', () => {
+  it('shows an "Auto-fixable" badge when an inline fix is present', () => {
     render(<DiagnosticCard diagnostic={{ ...sample, fix: { range: [0, 1], text: '' } }} />);
-    expect(screen.getByText('fixable')).toBeDefined();
+    expect(screen.getByText('Auto-fixable')).toBeDefined();
   });
 
-  it('shows a "suggested" indicator when only suggestions exist', () => {
-    render(
-      <DiagnosticCard
-        diagnostic={{
-          ...sample,
-          suggestions: [{ desc: 'do x', fix: { range: [0, 1], text: 'x' } }],
-        }}
-      />,
-    );
-    expect(screen.getByText('suggested')).toBeDefined();
+  it('shows an "Auto-fixable" badge when the linter reports it fixable', () => {
+    render(<DiagnosticCard diagnostic={{ ...sample, fixable: true }} />);
+    expect(screen.getByText('Auto-fixable')).toBeDefined();
+  });
+
+  it('does not claim fixable when neither a fix nor the fixable flag is present', () => {
+    render(<DiagnosticCard diagnostic={{ ...sample, source: 'oxc' }} />);
+    expect(screen.queryByText('Auto-fixable')).toBeNull();
   });
 
   it('renders "parser-error" placeholder for null rule id', () => {

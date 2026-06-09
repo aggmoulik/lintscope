@@ -21,10 +21,10 @@ describe('<SeverityBadge />', () => {
 
   it('applies severity-specific classes (smoke check)', () => {
     const { rerender } = render(<SeverityBadge severity="error" />);
-    expect(screen.getByText('error').className).toMatch(/red/);
+    expect(screen.getByText('error').className).toMatch(/error/);
     rerender(<SeverityBadge severity="warning" />);
-    expect(screen.getByText('warning').className).toMatch(/amber/);
+    expect(screen.getByText('warning').className).toMatch(/warning/);
     rerender(<SeverityBadge severity="info" />);
-    expect(screen.getByText('info').className).toMatch(/blue/);
+    expect(screen.getByText('info').className).toMatch(/violet/);
   });
 });

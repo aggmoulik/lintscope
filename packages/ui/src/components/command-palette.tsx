@@ -5,6 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
 import { useEffect, useMemo } from 'react';
 import { cn } from '../lib/utils';
+import { Icon } from './icon';
 
 /* ---------- action types ---------- */
 
@@ -147,9 +148,9 @@ function useToggleShortcut(enabled: boolean, toggle: () => void): void {
 /* ---------- component ---------- */
 
 const severityDot: Record<Severity, string> = {
-  error: 'bg-red-500',
-  warning: 'bg-amber-500',
-  info: 'bg-blue-500',
+  error: 'bg-error',
+  warning: 'bg-warning',
+  info: 'bg-violet',
 };
 
 export function CommandPalette({
@@ -178,7 +179,7 @@ export function CommandPalette({
           aria-label="Command palette"
           data-testid="command-palette"
           className={cn(
-            'fixed left-1/2 top-[18vh] z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950',
+            'fixed top-[14vh] left-1/2 z-50 w-[min(560px,92vw)] -translate-x-1/2 overflow-hidden rounded-[14px] border border-line-strong bg-surface font-sans shadow-2xl',
             className,
           )}
         >
@@ -191,18 +192,24 @@ export function CommandPalette({
             Filter diagnostics by severity, rule, file, or linter.
           </Dialog.Description>
           <Command label="Command palette">
-            <Command.Input
-              placeholder="Filter or jump…"
-              className="w-full border-b border-zinc-200 bg-transparent px-4 py-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500"
-            />
+            <div className="flex items-center gap-2.5 border-b border-line px-4">
+              <Icon name="search" size={16} className="text-ink-faint" />
+              <Command.Input
+                placeholder="Jump to a file, rule, or message…"
+                className="flex-1 bg-transparent py-3.5 text-[15px] text-ink outline-none placeholder:text-ink-faint"
+              />
+              <kbd className="rounded-[5px] border border-line-strong bg-surface-3 px-1.5 py-0.5 font-mono text-[10px] text-ink-muted">
+                esc
+              </kbd>
+            </div>
             <Command.List className="max-h-[60vh] overflow-y-auto px-2 py-2 text-sm">
-              <Command.Empty className="px-3 py-6 text-center text-zinc-500">
+              <Command.Empty className="px-3 py-6 text-center text-ink-faint">
                 No matches.
               </Command.Empty>
 
               <Command.Group
                 heading="Actions"
-                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-faint"
               >
                 <PaletteItem
                   value="clear-all-filters"
@@ -215,7 +222,7 @@ export function CommandPalette({
               {groups.severities.length > 0 && (
                 <Command.Group
                   heading="Filter by severity"
-                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-faint"
                 >
                   {groups.severities.map((s) => (
                     <PaletteItem
@@ -237,7 +244,7 @@ export function CommandPalette({
               {groups.linters.length > 1 && (
                 <Command.Group
                   heading="Filter by linter"
-                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-faint"
                 >
                   {groups.linters.map((l) => (
                     <PaletteItem
@@ -255,7 +262,7 @@ export function CommandPalette({
               {groups.rules.length > 0 && (
                 <Command.Group
                   heading="Filter by rule"
-                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-faint"
                 >
                   {groups.rules.map((r) => (
                     <PaletteItem
@@ -279,7 +286,7 @@ export function CommandPalette({
                             e.stopPropagation();
                             if (r.url) run({ type: 'open-rule-docs', url: r.url });
                           }}
-                          className="ml-1 rounded p-0.5 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                          className="ml-1 rounded p-0.5 text-ink-faint hover:bg-surface-3 hover:text-ink"
                           aria-label={`Open docs for ${r.ruleId}`}
                           data-testid="open-docs-button"
                         >
@@ -294,7 +301,7 @@ export function CommandPalette({
               {groups.files.length > 0 && (
                 <Command.Group
                   heading="Jump to file"
-                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-zinc-500"
+                  className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest [&_[cmdk-group-heading]]:text-ink-faint"
                 >
                   {groups.files.map((f) => (
                     <PaletteItem
@@ -334,7 +341,7 @@ function PaletteItem({
     <Command.Item
       value={value}
       onSelect={onSelect}
-      className="flex items-center gap-2 rounded-md px-3 py-1.5 text-zinc-800 aria-selected:bg-zinc-900 aria-selected:text-zinc-100 dark:text-zinc-200 dark:aria-selected:bg-zinc-100 dark:aria-selected:text-zinc-900"
+      className="flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13px] text-ink-muted aria-selected:bg-surface-2 aria-selected:text-ink"
       data-palette-value={value}
     >
       {children}
@@ -348,10 +355,10 @@ function CountBadge({ children, tone }: { children: React.ReactNode; tone?: 'err
       className={cn(
         'ml-auto rounded-full px-2 py-0.5 font-mono text-[10px] tabular-nums',
         tone === 'error'
-          ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300'
+          ? 'bg-error-bg text-error'
           : tone === 'warning'
-            ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
-            : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300',
+            ? 'bg-warning-bg text-warning'
+            : 'bg-surface-3 text-ink-muted',
       )}
     >
       {children}

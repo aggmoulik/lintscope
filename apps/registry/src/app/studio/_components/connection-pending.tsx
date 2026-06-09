@@ -1,6 +1,6 @@
 export function ConnectionPending() {
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-lg border border-dashed border-zinc-200 p-12 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500">
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-[14px] border border-line border-dashed p-12 text-sm text-ink-faint">
       <Spinner />
       <p>Connecting to your local studio…</p>
     </div>
@@ -10,7 +10,7 @@ export function ConnectionPending() {
 function Spinner() {
   return (
     <svg
-      className="h-5 w-5 animate-spin text-zinc-400"
+      className="h-5 w-5 animate-spin text-accent"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"

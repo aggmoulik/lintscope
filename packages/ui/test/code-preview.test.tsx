@@ -40,7 +40,9 @@ describe('<CodePreview />', () => {
   });
 
   it('renders the file name in the header when provided', () => {
-    render(<CodePreview source={SOURCE} line={3} fileName="src/foo.ts" />);
-    expect(screen.getByText(/src\/foo\.ts:3/)).toBeDefined();
+    // The location `:line` is rendered in its own accent-colored span, so the
+    // name + line live in adjacent nodes — assert on the concatenated text.
+    const { getByTestId } = render(<CodePreview source={SOURCE} line={3} fileName="src/foo.ts" />);
+    expect(getByTestId('code-preview').textContent).toContain('src/foo.ts:3');
   });
 });

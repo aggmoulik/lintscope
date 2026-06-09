@@ -97,12 +97,16 @@ function sortInPlace(node: FolderNode): void {
   }
 }
 
-/** Collect all folder relativePaths so we can default-expand the whole tree. */
-function allFolderPaths(node: FolderNode, out: Set<string> = new Set()): Set<string> {
+/**
+ * Folders to expand by default: only those that contain at least one subfolder.
+ * Leaf folders (which directly hold files) stay collapsed, so the tree opens to
+ * its directory structure without dumping every file — matching the design.
+ */
+function defaultExpandedFolders(node: FolderNode, out: string[] = []): string[] {
   for (const child of node.children) {
     if (child.kind === 'folder') {
-      out.add(child.relativePath);
-      allFolderPaths(child, out);
+      if (child.children.some((c) => c.kind === 'folder')) out.push(child.relativePath);
+      defaultExpandedFolders(child, out);
     }
   }
   return out;
@@ -114,62 +118,21 @@ function byRelativePath(files: FileEntry[]): Map<string, FileEntry> {
   return m;
 }
 
-/** File rows show the actual issue/warning counts. */
-function CountBadges({
-  errorCount,
-  warningCount,
-  selected,
-}: {
-  errorCount: number;
-  warningCount: number;
-  selected?: boolean;
-}) {
-  if (errorCount === 0 && warningCount === 0) return null;
-  return (
-    <span className="flex items-center gap-1.5 text-[10px] tabular-nums">
-      {errorCount > 0 && (
-        <span className={selected ? 'text-current' : 'text-red-600 dark:text-red-400'}>
-          {errorCount}
-        </span>
-      )}
-      {warningCount > 0 && (
-        <span className={selected ? 'text-current' : 'text-amber-600 dark:text-amber-400'}>
-          {warningCount}
-        </span>
-      )}
-    </span>
-  );
-}
-
 /**
- * Folder rows show only color dots — red if any nested errors, amber if any
- * nested warnings — to keep deep paths readable. The rolled-up counts stay in
- * the DOM as screen-reader-only text for accessibility.
+ * A single severity dot on the right of every row — red if there are any nested
+ * errors, amber if only warnings. The rolled-up counts stay in the DOM as
+ * screen-reader-only text for accessibility.
  */
-function FolderIndicator({
-  errorCount,
-  warningCount,
-}: {
-  errorCount: number;
-  warningCount: number;
-}) {
+function SeverityDot({ errorCount, warningCount }: { errorCount: number; warningCount: number }) {
   if (errorCount === 0 && warningCount === 0) return null;
+  const isError = errorCount > 0;
   return (
-    <span className="flex items-center gap-1">
-      {errorCount > 0 && (
-        <span
-          data-severity="error"
-          aria-hidden
-          className="h-1.5 w-1.5 rounded-full bg-red-500 dark:bg-red-400"
-        />
-      )}
-      {warningCount > 0 && (
-        <span
-          data-severity="warning"
-          aria-hidden
-          className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400"
-        />
-      )}
+    <span className="flex items-center">
+      <span
+        data-severity={isError ? 'error' : 'warning'}
+        aria-hidden
+        className={cn('size-1.5 rounded-full', isError ? 'bg-error' : 'bg-warning')}
+      />
       <span className="sr-only">
         {errorCount} errors, {warningCount} warnings
       </span>
@@ -187,7 +150,7 @@ function renderNodes(
         key={`folder:${node.relativePath}`}
         id={node.relativePath}
         label={node.name}
-        trailing={<FolderIndicator errorCount={node.errorCount} warningCount={node.warningCount} />}
+        trailing={<SeverityDot errorCount={node.errorCount} warningCount={node.warningCount} />}
       >
         {renderNodes(node.children, selectedPath)}
       </Folder>
@@ -197,13 +160,7 @@ function renderNodes(
         id={node.relativePath}
         label={node.name}
         data-relative-path={node.relativePath}
-        trailing={
-          <CountBadges
-            errorCount={node.errorCount}
-            warningCount={node.warningCount}
-            selected={selectedPath === node.relativePath}
-          />
-        }
+        trailing={<SeverityDot errorCount={node.errorCount} warningCount={node.warningCount} />}
       />
     ),
   );
@@ -232,7 +189,7 @@ export function FileTree({
   emptyState,
 }: FileTreeProps) {
   const root = useMemo(() => buildTree(files), [files]);
-  const defaultExpanded = useMemo(() => [...allFolderPaths(root)], [root]);
+  const defaultExpanded = useMemo(() => defaultExpandedFolders(root), [root]);
   const filesByPath = useMemo(() => byRelativePath(files), [files]);
 
   const handleSelect = useCallback(
@@ -247,7 +204,7 @@ export function FileTree({
     return (
       <div
         className={cn(
-          'rounded-lg border border-dashed border-zinc-200 p-6 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-500',
+          'rounded-[9px] border border-line border-dashed p-6 text-sm text-ink-faint',
           className,
         )}
       >
@@ -263,10 +220,7 @@ export function FileTree({
       defaultExpanded={defaultExpanded}
       selectedId={selectedPath ?? null}
       onSelect={handleSelect}
-      className={cn(
-        'overflow-auto rounded-lg border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950',
-        className,
-      )}
+      className={cn('overflow-auto rounded-[9px] border border-line bg-surface p-2', className)}
     >
       {searchable && <FileTreeSearch placeholder="Filter files…" />}
       {renderNodes(root.children, selectedPath)}
