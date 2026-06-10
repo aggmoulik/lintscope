@@ -1,6 +1,6 @@
 {
   "name": "lintscope",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A polished UI for your linter — runs in your browser, data stays on your machine. CLI half of the lintscope.dev pair.",
   "license": "MIT",
   "author": "aggmoulik <qwertymoulik@gmail.com>",

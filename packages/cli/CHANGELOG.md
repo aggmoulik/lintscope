@@ -1,5 +1,17 @@
 # lintscope
 
+## 0.3.0
+
+### Minor Changes
+
+- [`4c90d1a`](https://github.com/aggmoulik/lintscope/commit/4c90d1a68455a94433188b4a7539d5e5072cf986) Thanks [@aggmoulik](https://github.com/aggmoulik)! - Linter-agnostic dashboard. The report's `linters[]` entries now carry display
+  meta (label, logo, docs URL, autofix command) stamped by each adapter, and the
+  studio UI renders everything from it — badges, logos, filter tags, and the
+  copy-to-clipboard autofix hint all work for any adapter (including future
+  community ones) with zero UI changes. Stylelint diagnostics now show their
+  `stylelint --fix` hint. Additive schema field: reports produced by older
+  versions still load, falling back to built-in branding.
+
 ## 0.2.0
 
 ### Minor Changes
