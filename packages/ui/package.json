@@ -38,7 +38,7 @@
     "@lintscope/schema": "workspace:*",
     "@radix-ui/react-accordion": "1.2.12",
     "@radix-ui/react-dialog": "1.1.15",
-    "@tanstack/react-virtual": "3.13.25",
+    "@tanstack/react-virtual": "3.14.2",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
