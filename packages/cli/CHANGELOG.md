@@ -1,5 +1,15 @@
 # lintscope
 
+## 0.2.0
+
+### Minor Changes
+
+- [`40db971`](https://github.com/aggmoulik/lintscope/commit/40db97140afcab3c4fc29ca1c434c96192b43160) Thanks [@aggmoulik](https://github.com/aggmoulik)! - **Stylelint support** + a community adapter architecture.
+
+  - New linter: **Stylelint** (16+). Detected via `.stylelintrc*` / `stylelint.config.*`, runs alongside the other linters and merges into the same report. Handles stylelint's conventions: the JSON report on stderr and exit code 2 for findings.
+  - New internal `@lintscope/adapters` package (bundled into the CLI): a small plain-object contract, shared spawn runner, and registry — adding a linter is now a one-folder contribution with a reusable test harness. See `packages/adapters/README.md` for the guide.
+  - The Auto-fixable stat in the dashboard no longer counts ESLint _suggestions_ (which `--fix` doesn't apply) — it now matches the per-diagnostic badge.
+
 ## 0.1.2
 
 ### Patch Changes
