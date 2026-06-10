@@ -5,12 +5,15 @@ import { runStudio, type StudioHandle, type StudioOptions } from '../commands/st
 import { runView, type ViewHandle, type ViewOptions } from '../commands/view';
 import { LINTER_FORMATS, type LinterFormat } from '../load-report';
 
+/** Injected by tsup's `define` from package.json at build time. */
+declare const __CLI_VERSION__: string;
+
 const program = new Command();
 
 program
   .name('lintscope')
   .description('A polished UI for your linter. Data stays on your machine.')
-  .version('0.0.0');
+  .version(__CLI_VERSION__);
 
 interface ScanCliOptions {
   hostedUi?: string;
