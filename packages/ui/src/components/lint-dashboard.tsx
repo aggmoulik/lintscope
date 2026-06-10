@@ -22,8 +22,11 @@ export interface LintDashboardProps {
   onFetchSource?: (relativePath: string) => Promise<string>;
 }
 
-const isFixable = (d: Diagnostic): boolean =>
-  Boolean(d.fix) || Boolean(d.suggestions?.length) || d.fixable === true;
+// Auto-fixable ONLY when the linter reports a real autofix (ESLint inline
+// `fix`, Biome's `fixable` tag) — same semantics as the DiagnosticCard badge.
+// ESLint `suggestions` are manual-choice hints that `--fix` does NOT apply,
+// so they must not inflate this count.
+const isFixable = (d: Diagnostic): boolean => Boolean(d.fix) || d.fixable === true;
 
 function projectName(root: string): string {
   const segs = root.split(/[\\/]/).filter(Boolean);

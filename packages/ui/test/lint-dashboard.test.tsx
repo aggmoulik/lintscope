@@ -67,6 +67,33 @@ describe('<LintDashboard /> layout', () => {
     expect(within(tiles).getByText('Files affected')).toBeDefined();
   });
 
+  it('does NOT count suggestion-only diagnostics as auto-fixable (matches the card badge)', () => {
+    // ESLint suggestions are manual-choice hints — `eslint --fix` does not
+    // apply them. d1 gets suggestions only, d3 keeps a real inline fix.
+    const report: LintReport = {
+      ...REPORT,
+      diagnostics: [
+        makeDiagnostic({
+          id: 'd1',
+          relativePath: 'src/a.ts',
+          suggestions: [{ desc: 'use console.warn', fix: { range: [0, 3], text: 'warn' } }],
+        }),
+        makeDiagnostic({ id: 'd2', relativePath: 'src/a.ts' }),
+        makeDiagnostic({
+          id: 'd3',
+          severity: 'warning',
+          relativePath: 'src/b.ts',
+          fix: { range: [0, 3], text: 'const' },
+        }),
+      ],
+    };
+    render(<LintDashboard report={report} />);
+    const tiles = screen.getByTestId('stat-tiles');
+    const fixableTile = within(tiles).getByText('Auto-fixable').parentElement;
+    expect(fixableTile?.textContent).toContain('1');
+    expect(fixableTile?.textContent).not.toContain('2');
+  });
+
   it('renders the FileTree and the grouped diagnostic feed', () => {
     render(<LintDashboard report={REPORT} />);
     expect(screen.getByTestId('file-tree')).toBeDefined();
