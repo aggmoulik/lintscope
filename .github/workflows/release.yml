@@ -65,4 +65,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # setup-node's registry-url makes npm read /_temp/.npmrc (via
+          # NPM_CONFIG_USERCONFIG), which authenticates with ${NODE_AUTH_TOKEN}.
+          # Without this, npm publishes with setup-node's placeholder token and
+          # the registry rejects the PUT as E404.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
