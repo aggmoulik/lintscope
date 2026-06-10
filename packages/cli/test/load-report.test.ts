@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadReport } from '../src/load-report';
 
-const FIXTURES_DIR = path.join(__dirname, '..', '..', 'core', 'test', 'fixtures');
+const FIXTURES_DIR = path.join(__dirname, '..', '..', 'adapters', 'test', 'fixtures');
 const eslintRaw = readFileSync(path.join(FIXTURES_DIR, 'eslint-results.json'), 'utf8');
 const biomeRaw = readFileSync(path.join(FIXTURES_DIR, 'biome-results.json'), 'utf8');
 const oxcRaw = readFileSync(path.join(FIXTURES_DIR, 'oxc-results.json'), 'utf8');

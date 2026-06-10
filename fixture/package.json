@@ -5,6 +5,7 @@
   "description": "Sample project with intentional lint errors. Used by `pnpm demo` to populate the dashboard.",
   "type": "module",
   "devDependencies": {
-    "eslint": "^10.4.0"
+    "eslint": "^10.4.0",
+    "stylelint": "^16.26.1"
   }
 }

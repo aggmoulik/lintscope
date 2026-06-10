@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { type BiomeReport, mapBiomeResults } from '../src/adapters/biome';
+import { type BiomeReport, mapBiomeResults } from '../src/linters/biome';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = JSON.parse(

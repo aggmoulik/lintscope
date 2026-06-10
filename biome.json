@@ -15,7 +15,7 @@
       "!**/coverage",
       "!apps/registry/public/r/*.json",
       "!apps/registry/next-env.d.ts",
-      "!packages/core/test/fixtures/**/*.json",
+      "!packages/adapters/test/fixtures/**/*.json",
       "!fixture"
     ]
   },

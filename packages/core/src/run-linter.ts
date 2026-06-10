@@ -1,12 +1,13 @@
 import path from 'node:path';
+import { getAdapter, runAdapter, toPosix } from '@lintscope/adapters';
 import { type LintReport, LintReportSchema } from '@lintscope/schema';
-import { runBiome } from './adapters/biome';
-import { runEslint } from './adapters/eslint';
-import { runOxc } from './adapters/oxc';
 import { type DetectedLinter, detectLinter, detectLinters } from './detect-config';
-import { toPosix } from './display-path';
 
-export type LinterName = 'eslint' | 'biome' | 'oxc';
+/**
+ * A registered adapter name. Built-ins are 'eslint' | 'biome' | 'oxc'; the
+ * registry is open (registerAdapter), so the type is too.
+ */
+export type LinterName = string;
 
 export interface RunLinterOptions {
   /** Project root. */
@@ -125,14 +126,9 @@ type LinterBase = { cwd: string; patterns?: string[] };
 type RunOne = (detected: DetectedLinter, base: LinterBase) => Promise<LintReport>;
 
 function runOneAdapter(detected: DetectedLinter, base: LinterBase): Promise<LintReport> {
-  switch (detected.linter) {
-    case 'eslint':
-      return runEslint({ ...base, configPath: detected.config.path });
-    case 'biome':
-      return runBiome(base);
-    case 'oxc':
-      return runOxc(base);
-  }
+  // configPath flows to the adapter uniformly; each descriptor decides whether
+  // its CLI args / report use it (eslint does, biome/oxc self-discover).
+  return runAdapter(getAdapter(detected.linter), { ...base, configPath: detected.config.path });
 }
 
 /**
@@ -284,19 +280,9 @@ function computePatterns(
  */
 export async function runLinter(options: RunLinterOptions): Promise<LintReport> {
   const choice = resolveLinterChoice(options.cwd, options.linter);
-  const base = {
+  return runAdapter(getAdapter(choice.linter), {
     cwd: options.cwd,
     ...(options.patterns ? { patterns: options.patterns } : {}),
-  };
-  switch (choice.linter) {
-    case 'eslint':
-      return runEslint({
-        ...base,
-        ...(choice.configPath ? { configPath: choice.configPath } : {}),
-      });
-    case 'biome':
-      return runBiome(base);
-    case 'oxc':
-      return runOxc(base);
-  }
+    ...(choice.configPath ? { configPath: choice.configPath } : {}),
+  });
 }

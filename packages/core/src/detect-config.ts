@@ -1,109 +1,31 @@
-import { existsSync } from 'node:fs';
-import path from 'node:path';
+import { type DetectedConfig, listAdapters } from '@lintscope/adapters';
 
-const FLAT_CONFIG_NAMES = [
-  'eslint.config.js',
-  'eslint.config.mjs',
-  'eslint.config.cjs',
-  'eslint.config.ts',
-];
-
-const LEGACY_CONFIG_NAMES = [
-  '.eslintrc.js',
-  '.eslintrc.cjs',
-  '.eslintrc.json',
-  '.eslintrc.yaml',
-  '.eslintrc.yml',
-];
-
-export interface DetectedEslintConfig {
-  kind: 'flat' | 'legacy';
-  path: string;
+/** A linter found in a project: the adapter's name + its detected config. */
+export interface DetectedLinter {
+  linter: string;
+  config: DetectedConfig;
 }
-
-/**
- * Find an ESLint config in `cwd`. Returns the first match in preference order:
- * flat config first (eslint.config.{js,mjs,cjs,ts}), then legacy (.eslintrc.*).
- *
- * Returns `null` if no config is found. Callers should error with a hint
- * rather than guessing.
- */
-export function detectEslintConfig(cwd: string): DetectedEslintConfig | null {
-  for (const name of FLAT_CONFIG_NAMES) {
-    const p = path.join(cwd, name);
-    if (existsSync(p)) return { kind: 'flat', path: p };
-  }
-  for (const name of LEGACY_CONFIG_NAMES) {
-    const p = path.join(cwd, name);
-    if (existsSync(p)) return { kind: 'legacy', path: p };
-  }
-  return null;
-}
-
-const BIOME_CONFIG_NAMES = ['biome.json', 'biome.jsonc'];
-
-export interface DetectedBiomeConfig {
-  path: string;
-}
-
-/**
- * Find a Biome config (`biome.json` or `biome.jsonc`) in `cwd`. Biome itself
- * walks up the tree to find one, but for autodetect we only care about the
- * project root.
- */
-export function detectBiomeConfig(cwd: string): DetectedBiomeConfig | null {
-  for (const name of BIOME_CONFIG_NAMES) {
-    const p = path.join(cwd, name);
-    if (existsSync(p)) return { path: p };
-  }
-  return null;
-}
-
-const OXC_CONFIG_NAMES = ['.oxlintrc.json', 'oxlintrc.json'];
-
-export interface DetectedOxcConfig {
-  path: string;
-}
-
-/**
- * Find an oxlint config (`.oxlintrc.json` preferred, `oxlintrc.json` accepted).
- */
-export function detectOxcConfig(cwd: string): DetectedOxcConfig | null {
-  for (const name of OXC_CONFIG_NAMES) {
-    const p = path.join(cwd, name);
-    if (existsSync(p)) return { path: p };
-  }
-  return null;
-}
-
-export type DetectedLinter =
-  | { linter: 'oxc'; config: DetectedOxcConfig }
-  | { linter: 'biome'; config: DetectedBiomeConfig }
-  | { linter: 'eslint'; config: DetectedEslintConfig };
 
 /**
  * Pick the single highest-precedence linter for a project (oxc > biome >
- * eslint). The reasoning is migration intent — a project that has switched to
- * the faster, newer tool wants its output. Used by `view` and as a building
- * block; the studio/scan/export flows run ALL linters via `detectLinters`.
+ * eslint, per adapter `priority`). The reasoning is migration intent — a
+ * project that has switched to the faster, newer tool wants its output. Used
+ * by `view` and as a building block; the studio/scan/export flows run ALL
+ * linters via `detectLinters`.
  */
 export function detectLinter(cwd: string): DetectedLinter | null {
   return detectLinters(cwd)[0] ?? null;
 }
 
 /**
- * Detect EVERY linter that has a config in `cwd`, in precedence order
- * (oxc > biome > eslint) — a workspace often runs more than one (e.g. Biome
- * for format + ESLint for rules). The order is the default *focus*, not an
- * exclusion. Returns `[]` when none are configured.
+ * Detect EVERY linter that has a config in `cwd`, in adapter-priority order —
+ * a workspace often runs more than one (e.g. Biome for format + ESLint for
+ * rules). The order is the default *focus*, not an exclusion. Returns `[]`
+ * when none are configured.
  */
 export function detectLinters(cwd: string): DetectedLinter[] {
-  const detected: DetectedLinter[] = [];
-  const oxc = detectOxcConfig(cwd);
-  if (oxc) detected.push({ linter: 'oxc', config: oxc });
-  const biome = detectBiomeConfig(cwd);
-  if (biome) detected.push({ linter: 'biome', config: biome });
-  const eslint = detectEslintConfig(cwd);
-  if (eslint) detected.push({ linter: 'eslint', config: eslint });
-  return detected;
+  return listAdapters().flatMap((adapter) => {
+    const config = adapter.detect(cwd);
+    return config ? [{ linter: adapter.name, config }] : [];
+  });
 }

@@ -1,4 +1,3 @@
-import { spawn } from 'node:child_process';
 import path from 'node:path';
 import {
   type Diagnostic,
@@ -7,64 +6,8 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
-import { relativeDisplayPath } from '../display-path';
-import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
-
-/**
- * Structural type for the subset of `oxlint --format=json` we depend on.
- *
- * oxlint's JSON format has shifted between minor releases. Field names we've
- * observed:
- *   - `severity` ∈ {error, warning, info, advice, hint}
- *   - `code` (rule id) — sometimes nested under `scope` qualifier
- *   - `filename` OR `file` for the path
- *   - `labels[]` for spans + line/column when available
- *
- * The mapper accepts all of these. When line/column is missing we fall back
- * to 1/1 rather than failing — for `advice`-class diagnostics that often
- * carry no location.
- */
-export interface OxcLabel {
-  message?: string;
-  /**
-   * oxlint 1.x nests line/column INSIDE `span` (alongside the byte offset);
-   * older releases put them at the label top level. We read both.
-   */
-  span?: {
-    offset?: number;
-    length?: number;
-    line?: number;
-    column?: number;
-    end_line?: number;
-    end_column?: number;
-  };
-  line?: number;
-  column?: number;
-  end_line?: number;
-  end_column?: number;
-}
-
-export interface OxcDiagnostic {
-  severity: string;
-  code?: string;
-  /** Some versions namespace rules — e.g. "eslint/no-console". */
-  scope?: string;
-  message?: string;
-  filename?: string;
-  /** Older versions used `file`. */
-  file?: string;
-  labels?: OxcLabel[];
-}
-
-export interface OxcReport {
-  diagnostics?: OxcDiagnostic[];
-}
-
-export interface MapOxcContext {
-  cwd: string;
-  oxcVersion: string;
-  configPath?: string;
-}
+import { relativeDisplayPath } from '../../display-path';
+import type { MapOxcContext, OxcDiagnostic, OxcReport } from './api-types';
 
 function normalizeSeverity(input: string): Diagnostic['severity'] {
   const s = input.toLowerCase();
@@ -205,91 +148,4 @@ export function mapOxcResults(payload: OxcReport, ctx: MapOxcContext): LintRepor
   };
 
   return LintReportSchema.parse(report);
-}
-
-export interface RunOxcOptions {
-  cwd: string;
-  /** Globs / paths to lint. Defaults to `['.']`. */
-  patterns?: string[];
-  /**
-   * Explicit oxlint binary path (override). When omitted, the project-local
-   * `node_modules/.bin/oxlint` is preferred, falling back to `oxlint` on PATH.
-   */
-  binary?: string;
-}
-
-/**
- * Spawn `oxlint --format=json` and normalize the output into a LintReport.
- * Surfaces clear errors when oxlint is not installed, when it crashes
- * (exit ≥ 2), or when it emits malformed JSON.
- */
-export async function runOxc(options: RunOxcOptions): Promise<LintReport> {
-  const patterns = options.patterns ?? ['.'];
-  const { command: binary, resolvedFrom } = resolveLinterBin({
-    projectRoot: options.cwd,
-    name: 'oxlint',
-    ...(options.binary ? { override: options.binary } : {}),
-  });
-  const args = ['--format=json', ...patterns];
-
-  const child = spawn(binary, args, {
-    cwd: options.cwd,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    // A local `.bin` shim on Windows is a `.cmd`, which Node refuses to spawn
-    // without a shell (CVE-2024-27980). PATH/override stay shell-free.
-    // NOTE: shell mode doesn't quote a binary path containing spaces — tracked
-    // as a Phase D Windows follow-up (adopt cross-spawn if it bites).
-    shell: resolvedFrom === 'local' && /\.(cmd|bat)$/i.test(binary),
-  });
-
-  const stdoutChunks: Buffer[] = [];
-  const stderrChunks: Buffer[] = [];
-  child.stdout?.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
-  child.stderr?.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
-
-  let spawnError: NodeJS.ErrnoException | undefined;
-  child.on('error', (err) => {
-    spawnError = err as NodeJS.ErrnoException;
-  });
-
-  const exitCode: number | null = await new Promise((resolve) => {
-    child.once('close', resolve);
-  });
-
-  if (spawnError) {
-    if (spawnError.code === 'ENOENT') {
-      throw new Error(
-        `Could not find \`${binary}\` on PATH. Install oxlint (\`pnpm add -D oxlint\`) or pass --binary.`,
-      );
-    }
-    throw spawnError;
-  }
-
-  const stdout = Buffer.concat(stdoutChunks).toString('utf8');
-  const stderr = Buffer.concat(stderrChunks).toString('utf8');
-
-  // oxlint, like ESLint and Biome, exits 1 when there are findings — normal.
-  if (exitCode !== null && exitCode > 1) {
-    throw new Error(
-      `oxlint exited with code ${exitCode}: ${stderr.trim() || stdout.trim() || 'no output'}`,
-    );
-  }
-
-  if (!stdout.trim()) {
-    throw new Error(`oxlint produced no stdout (stderr: ${stderr.trim() || 'empty'})`);
-  }
-
-  let payload: OxcReport;
-  try {
-    payload = JSON.parse(stdout) as OxcReport;
-  } catch (err) {
-    throw new Error(
-      `oxlint --format=json output was not valid JSON: ${err instanceof Error ? err.message : String(err)}`,
-    );
-  }
-
-  return mapOxcResults(payload, {
-    cwd: options.cwd,
-    oxcVersion: resolveLinterVersion(options.cwd, 'oxlint'),
-  });
 }

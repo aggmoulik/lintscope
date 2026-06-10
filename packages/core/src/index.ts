@@ -1,48 +1,42 @@
+// Adapter layer — re-exported from @lintscope/adapters (its canonical home)
+// so existing consumers of @lintscope/core keep working unchanged.
 export {
   type BiomeDiagnostic,
   type BiomeReport,
-  type MapBiomeContext,
-  mapBiomeResults,
-  type RunBiomeOptions,
-  runBiome,
-} from './adapters/biome';
-export {
+  buildEslintArgs,
+  type DetectedBiomeConfig,
+  type DetectedEslintConfig,
+  type DetectedOxcConfig,
+  detectBiomeConfig,
+  detectEslintConfig,
+  detectOxcConfig,
   type EslintLintMessage,
   type EslintLintResult,
+  getAdapter,
+  type LinterAdapter,
+  listAdapters,
+  type MapBiomeContext,
   type MapEslintContext,
-  mapEslintResults,
-  type RunEslintOptions,
-  runEslint,
-} from './adapters/eslint';
-export {
   type MapOxcContext,
+  mapBiomeResults,
+  mapEslintResults,
   mapOxcResults,
   type OxcDiagnostic,
   type OxcLabel,
   type OxcReport,
-  type RunOxcOptions,
-  runOxc,
-} from './adapters/oxc';
-export {
-  type DetectedBiomeConfig,
-  type DetectedEslintConfig,
-  type DetectedLinter,
-  type DetectedOxcConfig,
-  detectBiomeConfig,
-  detectEslintConfig,
-  detectLinter,
-  detectLinters,
-  detectOxcConfig,
-} from './detect-config';
-export { type PathImpl, relativeDisplayPath, toPosix } from './display-path';
-export {
+  type PathImpl,
   type ResolvedLinterBin,
   type ResolveLinterBinDeps,
   type ResolveLinterBinOptions,
   type ResolveLinterVersionDeps,
+  registerAdapter,
+  relativeDisplayPath,
   resolveLinterBin,
   resolveLinterVersion,
-} from './resolve-bin';
+  runAdapter,
+  toPosix,
+} from '@lintscope/adapters';
+export { type DetectedLinter, detectLinter, detectLinters } from './detect-config';
 export {
   type LinterName,
   mergeReports,
