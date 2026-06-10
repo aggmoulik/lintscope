@@ -98,7 +98,11 @@ describe('<LintDashboard /> layout', () => {
 
   it('regroups the feed via the group-by control', () => {
     render(<LintDashboard report={REPORT} />);
-    fireEvent.click(screen.getByTestId('diagnostic-feed').querySelector('[data-groupby="rule"]')!);
+    const groupByRule = screen
+      .getByTestId('diagnostic-feed')
+      .querySelector('[data-groupby="rule"]');
+    if (!groupByRule) throw new Error('group-by "rule" control not found');
+    fireEvent.click(groupByRule);
     // grouped by rule → both rule names appear as group headers
     expect(screen.getAllByText('no-console').length).toBeGreaterThan(0);
     expect(screen.getAllByText('prefer-const').length).toBeGreaterThan(0);

@@ -100,6 +100,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+      # The fixture is deliberately outside the pnpm workspace (it simulates a
+      # real user project with its own npm lockfile), so the adapter resolves
+      # eslint from fixture/node_modules/.bin — install it there first.
+      - name: Install fixture dependencies
+        working-directory: fixture
+        run: npm ci
+
       - name: export a report against the fixture
         working-directory: fixture
         # `export` is the non-interactive command — runs the linter(s) and writes
