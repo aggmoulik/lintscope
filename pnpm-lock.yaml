@@ -113,8 +113,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
       commander:
-        specifier: 13.0.0
-        version: 13.0.0
+        specifier: 15.0.0
+        version: 15.0.0
     devDependencies:
       '@lintscope/api-schema':
         specifier: workspace:*
@@ -1902,9 +1902,9 @@ packages:
       react: ^18 || ^19 || ^19.0.0-rc
       react-dom: ^18 || ^19 || ^19.0.0-rc
 
-  commander@13.0.0:
-    resolution: {integrity: sha512-oPYleIY8wmTVzkvQq10AEok6YcTC4sRUBl8F9gVuwchGVUCTbl/vhLTaQqutuuySYOsu8YTgV+OxKc/8Yvx+mQ==}
-    engines: {node: '>=18'}
+  commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
@@ -4113,7 +4113,7 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
-  commander@13.0.0: {}
+  commander@15.0.0: {}
 
   commander@4.1.1: {}
 
