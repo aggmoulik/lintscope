@@ -34,6 +34,7 @@ export {
   detectLinters,
   detectOxcConfig,
 } from './detect-config';
+export { type PathImpl, relativeDisplayPath, toPosix } from './display-path';
 export {
   type ResolvedLinterBin,
   type ResolveLinterBinDeps,

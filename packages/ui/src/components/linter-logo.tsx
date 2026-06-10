@@ -40,7 +40,6 @@ export function LinterLogo({ source, size = 14, className }: LinterLogoProps) {
 
   if (meta?.slug && !failed) {
     return (
-      // biome-ignore lint/a11y/useAltText: decorative brand mark; the name is rendered alongside
       <img
         src={`https://logos.lndev.me/logos/${meta.slug}.svg`}
         alt=""

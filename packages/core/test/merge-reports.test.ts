@@ -81,11 +81,23 @@ describe('mergeReports', () => {
   it('sums summary counts, uses unique file count, merges ruleFrequency', () => {
     const r1 = report({
       files: [{ path: '/repo/a.ts', relativePath: 'a.ts', errorCount: 1, warningCount: 0 }],
-      summary: { errorCount: 1, warningCount: 0, fixableCount: 1, fileCount: 1, ruleFrequency: { x: 1 } },
+      summary: {
+        errorCount: 1,
+        warningCount: 0,
+        fixableCount: 1,
+        fileCount: 1,
+        ruleFrequency: { x: 1 },
+      },
     });
     const r2 = report({
       files: [{ path: '/repo/a.ts', relativePath: 'a.ts', errorCount: 0, warningCount: 2 }],
-      summary: { errorCount: 0, warningCount: 2, fixableCount: 0, fileCount: 1, ruleFrequency: { x: 1, y: 3 } },
+      summary: {
+        errorCount: 0,
+        warningCount: 2,
+        fixableCount: 0,
+        fileCount: 1,
+        ruleFrequency: { x: 1, y: 3 },
+      },
     });
     const merged = mergeReports([r1, r2]);
     expect(merged.summary.errorCount).toBe(1);

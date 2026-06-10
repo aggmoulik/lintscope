@@ -1,7 +1,7 @@
 import type { Stats } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
-import path from 'node:path';
 import { FileQuerySchema, type FileResponse, FileResponseSchema } from '@lintscope/api-schema';
+import { relativeDisplayPath } from '@lintscope/core';
 import { PathTraversalError, safePath } from '@lintscope/studio-server';
 import type { LintContext } from '../context';
 
@@ -72,7 +72,9 @@ export async function handleFileRequest(
     };
   }
 
-  const relative = path.relative(context.projectRoot, absolute) || path.basename(absolute);
+  // Forward-slash form on every platform — must match the report's
+  // relativePath convention so the studio UI can cross-reference files.
+  const relative = relativeDisplayPath(context.projectRoot, absolute);
   const response: FileResponse = {
     path: absolute,
     relativePath: relative,
