@@ -7,6 +7,7 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
+import { relativeDisplayPath } from '../display-path';
 import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
 
 /**
@@ -71,7 +72,7 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
     if (!filePath) continue;
 
     const absolute = path.resolve(ctx.cwd, filePath);
-    const relativePath = path.relative(ctx.cwd, absolute) || path.basename(absolute);
+    const relativePath = relativeDisplayPath(ctx.cwd, absolute);
 
     const span = d.location?.span;
     const source = d.location?.sourceCode ?? '';
@@ -115,7 +116,7 @@ export function mapBiomeResults(payload: BiomeReport, ctx: MapBiomeContext): Lin
   for (const [absolute, counts] of filesIndex) {
     files.push({
       path: absolute,
-      relativePath: path.relative(ctx.cwd, absolute) || path.basename(absolute),
+      relativePath: relativeDisplayPath(ctx.cwd, absolute),
       ...counts,
     });
   }

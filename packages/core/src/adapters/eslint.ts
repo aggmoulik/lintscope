@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process';
-import path from 'node:path';
 import {
   type Diagnostic,
   diagnosticId,
@@ -7,6 +6,7 @@ import {
   LintReportSchema,
   SCHEMA_VERSION,
 } from '@lintscope/schema';
+import { relativeDisplayPath } from '../display-path';
 import { resolveLinterBin, resolveLinterVersion } from '../resolve-bin';
 
 /**
@@ -56,7 +56,7 @@ export function mapEslintResults(results: EslintLintResult[], ctx: MapEslintCont
   let totalFixable = 0;
 
   for (const result of results) {
-    const relativePath = path.relative(ctx.cwd, result.filePath) || path.basename(result.filePath);
+    const relativePath = relativeDisplayPath(ctx.cwd, result.filePath);
 
     files.push({
       path: result.filePath,

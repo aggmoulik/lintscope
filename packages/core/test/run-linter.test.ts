@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { DetectedLinter } from '../src/detect-config';
 import { resolveLinterChoice, resolveLintScope } from '../src/run-linter';
@@ -41,47 +42,54 @@ describe('resolveLinterChoice', () => {
 });
 
 describe('resolveLintScope', () => {
-  // detect() that only finds oxc at `/repo`, nowhere else (root config).
+  // resolveLintScope path.resolve()s the cwd before walking up, so the fake
+  // root must be platform-resolved too ('/repo' becomes 'D:\repo' on Windows).
+  const ROOT = path.resolve('/repo');
+
+  // detect() that only finds oxc at the root, nowhere else (root config).
   const oxcAtRoot = (dir: string): DetectedLinter | null =>
-    dir === '/repo' ? { linter: 'oxc', config: { path: '/repo/.oxlintrc.json' } } : null;
+    dir === ROOT ? { linter: 'oxc', config: { path: '/repo/.oxlintrc.json' } } : null;
 
   it('config at cwd, no targets → whole project (no patterns)', () => {
-    const scope = resolveLintScope({ cwd: '/repo' }, oxcAtRoot);
+    const scope = resolveLintScope({ cwd: ROOT }, oxcAtRoot);
     expect(scope).toEqual({
-      projectRoot: '/repo',
+      projectRoot: ROOT,
       linter: 'oxc',
       configPath: '/repo/.oxlintrc.json',
     });
   });
 
   it('walks up to the config root and scopes to the sub-path when run from a sub-package', () => {
-    const scope = resolveLintScope({ cwd: '/repo/apps/web' }, oxcAtRoot);
-    expect(scope.projectRoot).toBe('/repo');
+    const scope = resolveLintScope({ cwd: path.join(ROOT, 'apps/web') }, oxcAtRoot);
+    expect(scope.projectRoot).toBe(ROOT);
     expect(scope.linter).toBe('oxc');
     expect(scope.patterns).toEqual(['apps/web']);
   });
 
   it('uses explicit targets relative to the config root (run from root)', () => {
-    const scope = resolveLintScope({ cwd: '/repo', targets: ['apps/web'] }, oxcAtRoot);
-    expect(scope.projectRoot).toBe('/repo');
+    const scope = resolveLintScope({ cwd: ROOT, targets: ['apps/web'] }, oxcAtRoot);
+    expect(scope.projectRoot).toBe(ROOT);
     expect(scope.patterns).toEqual(['apps/web']);
   });
 
   it('resolves explicit targets relative to cwd, expressed against the config root', () => {
-    const scope = resolveLintScope({ cwd: '/repo/apps/web', targets: ['src'] }, oxcAtRoot);
-    expect(scope.projectRoot).toBe('/repo');
+    const scope = resolveLintScope(
+      { cwd: path.join(ROOT, 'apps/web'), targets: ['src'] },
+      oxcAtRoot,
+    );
+    expect(scope.projectRoot).toBe(ROOT);
     expect(scope.patterns).toEqual(['apps/web/src']);
   });
 
   it('honors an explicit linter override', () => {
-    const scope = resolveLintScope({ cwd: '/repo', linter: 'biome' }, oxcAtRoot);
+    const scope = resolveLintScope({ cwd: ROOT, linter: 'biome' }, oxcAtRoot);
     // override differs from detected oxc → no oxc configPath leaks
     expect(scope.linter).toBe('biome');
     expect(scope.configPath).toBeUndefined();
   });
 
   it('throws when no config is found in cwd or any ancestor and no override', () => {
-    expect(() => resolveLintScope({ cwd: '/repo/apps/web' }, () => null)).toThrow(
+    expect(() => resolveLintScope({ cwd: path.join(ROOT, 'apps/web') }, () => null)).toThrow(
       /No linter detected/,
     );
   });

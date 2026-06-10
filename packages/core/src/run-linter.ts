@@ -4,6 +4,7 @@ import { runBiome } from './adapters/biome';
 import { runEslint } from './adapters/eslint';
 import { runOxc } from './adapters/oxc';
 import { type DetectedLinter, detectLinter, detectLinters } from './detect-config';
+import { toPosix } from './display-path';
 
 export type LinterName = 'eslint' | 'biome' | 'oxc';
 
@@ -254,7 +255,11 @@ export function resolveLintScope(
   };
 }
 
-/** Lint patterns relative to `projectRoot`: explicit targets win, else scope to `cwd`. */
+/**
+ * Lint patterns relative to `projectRoot`: explicit targets win, else scope to
+ * `cwd`. Always forward-slash form — glob syntax treats `\` as an escape, so
+ * Windows-separated patterns would silently match nothing.
+ */
 function computePatterns(
   cwd: string,
   projectRoot: string,
@@ -263,11 +268,11 @@ function computePatterns(
   if (targets && targets.length > 0) {
     return targets.map((target) => {
       const rel = path.relative(projectRoot, path.resolve(cwd, target));
-      return rel === '' ? '.' : rel;
+      return rel === '' ? '.' : toPosix(rel);
     });
   }
   if (cwd !== projectRoot) {
-    return [path.relative(projectRoot, cwd)];
+    return [toPosix(path.relative(projectRoot, cwd))];
   }
   return undefined;
 }
