@@ -2,6 +2,7 @@ import type { Diagnostic } from '@lintscope/schema';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DiagnosticCard } from '../src/components/diagnostic-card';
+import { deriveLinterMeta } from '../src/lib/linter-meta';
 
 const sample: Diagnostic = {
   id: 'abc123',
@@ -18,7 +19,9 @@ const sample: Diagnostic = {
 
 describe('<DiagnosticCard />', () => {
   it('shows rule id, message, and location', () => {
-    const { container } = render(<DiagnosticCard diagnostic={sample} />);
+    const { container } = render(
+      <DiagnosticCard diagnostic={sample} meta={deriveLinterMeta(sample.source)} />,
+    );
     expect(screen.getByText('no-unused-vars')).toBeDefined();
     expect(screen.getByText("'foo' is defined but never used.")).toBeDefined();
     // The foot shows the short filename + location (the full path lives in the
@@ -28,41 +31,73 @@ describe('<DiagnosticCard />', () => {
   });
 
   it('renders rule id as a link when url is provided', () => {
-    render(<DiagnosticCard diagnostic={sample} />);
+    render(<DiagnosticCard diagnostic={sample} meta={deriveLinterMeta(sample.source)} />);
     const link = screen.getByRole('link', { name: 'no-unused-vars' }) as HTMLAnchorElement;
     expect(link.href).toBe('https://eslint.org/docs/rules/no-unused-vars');
   });
 
   it('shows an "Auto-fixable" badge when an inline fix is present', () => {
-    render(<DiagnosticCard diagnostic={{ ...sample, fix: { range: [0, 1], text: '' } }} />);
+    render(
+      <DiagnosticCard
+        diagnostic={{ ...sample, fix: { range: [0, 1], text: '' } }}
+        meta={deriveLinterMeta(sample.source)}
+      />,
+    );
     expect(screen.getByText('Auto-fixable')).toBeDefined();
   });
 
   it('shows an "Auto-fixable" badge when the linter reports it fixable', () => {
-    render(<DiagnosticCard diagnostic={{ ...sample, fixable: true }} />);
+    render(
+      <DiagnosticCard
+        diagnostic={{ ...sample, fixable: true }}
+        meta={deriveLinterMeta(sample.source)}
+      />,
+    );
     expect(screen.getByText('Auto-fixable')).toBeDefined();
   });
 
   it('does not claim fixable when neither a fix nor the fixable flag is present', () => {
-    render(<DiagnosticCard diagnostic={{ ...sample, source: 'oxc' }} />);
+    render(
+      <DiagnosticCard
+        diagnostic={{ ...sample, source: 'oxc' }}
+        meta={deriveLinterMeta(sample.source)}
+      />,
+    );
     expect(screen.queryByText('Auto-fixable')).toBeNull();
   });
 
   it('renders "parser-error" placeholder for null rule id', () => {
-    render(<DiagnosticCard diagnostic={{ ...sample, ruleId: null, url: undefined }} />);
+    render(
+      <DiagnosticCard
+        diagnostic={{ ...sample, ruleId: null, url: undefined }}
+        meta={deriveLinterMeta(sample.source)}
+      />,
+    );
     expect(screen.getByText('parser-error')).toBeDefined();
   });
 
   it('fires onClick handler when clicked', () => {
     const onClick = vi.fn();
-    render(<DiagnosticCard diagnostic={sample} onClick={onClick} />);
+    render(
+      <DiagnosticCard
+        diagnostic={sample}
+        meta={deriveLinterMeta(sample.source)}
+        onClick={onClick}
+      />,
+    );
     fireEvent.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalledWith(sample);
   });
 
   it('fires onClick on Enter / Space when interactive', () => {
     const onClick = vi.fn();
-    render(<DiagnosticCard diagnostic={sample} onClick={onClick} />);
+    render(
+      <DiagnosticCard
+        diagnostic={sample}
+        meta={deriveLinterMeta(sample.source)}
+        onClick={onClick}
+      />,
+    );
     const card = screen.getByRole('button');
     fireEvent.keyDown(card, { key: 'Enter' });
     fireEvent.keyDown(card, { key: ' ' });

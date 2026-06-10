@@ -139,6 +139,17 @@ Notes that save review rounds:
    (severity mapping, position fallbacks, format quirks).
 9. **Run the gauntlet:** `pnpm test && pnpm typecheck && pnpm lint` from the repo root.
 
+## What about the UI? — nothing.
+
+The dashboard has **zero per-linter code**. Your adapter's `meta` (label, logo
+slug, docs URL, `fixCommand`) is stamped into the report's `linters[]` entries
+by the runner; the UI resolves it once at its boundary (`resolveLinterMeta`)
+and every badge, logo, filter tag, and autofix hint renders from it. A linter
+the UI has never heard of gets a derived label and a stable color
+automatically. Fill in `meta` on your descriptor and you're done — if you find
+yourself editing `packages/ui` to add a linter, something is wrong; file an
+issue instead.
+
 ## PR checklist
 
 - [ ] Fixtures are captured from a **real linter run**, with the linter version noted
@@ -146,6 +157,7 @@ Notes that save review rounds:
 - [ ] `map()` ends in `LintReportSchema.parse` and the harness suite passes
 - [ ] Relative paths via `relativeDisplayPath` (no raw `path.relative` / no `\`)
 - [ ] `okExitCodes` matches the linter's documented convention (link it in the PR)
+- [ ] `meta` is filled in (label at minimum; `fixCommand` if the linter has an autofix)
 - [ ] No new npm dependencies (adapters spawn the *project's* linter — we never depend
       on linter packages ourselves)
 - [ ] `docs/roadmap.md` + `docs/CHANGELOG.md` updated if the linter priority order changes

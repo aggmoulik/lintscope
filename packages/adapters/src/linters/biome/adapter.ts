@@ -14,7 +14,12 @@ import { mapBiomeResults } from './mapper';
  */
 export const biomeAdapter: LinterAdapter<BiomeReport> = {
   name: 'biome',
-  meta: { label: 'Biome', logoSlug: 'biome', docsUrl: 'https://biomejs.dev' },
+  meta: {
+    label: 'Biome',
+    logoSlug: 'biome',
+    docsUrl: 'https://biomejs.dev',
+    fixCommand: 'biome lint --write',
+  },
   priority: 20,
   bin: 'biome',
   pkgName: '@biomejs/biome',

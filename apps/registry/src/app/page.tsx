@@ -1,4 +1,6 @@
 import { DiagnosticCard, Icon, type IconName, LintDashboard, LinterLogo } from '@lintscope/ui';
+// Server-safe subpath: pure meta resolution, callable during prerender.
+import { deriveLinterMeta } from '@lintscope/ui/meta';
 import type { ReactNode } from 'react';
 import { CommandChip } from './_components/command-chip';
 import { sampleDiagnostic, sampleReport } from './_data/sample-report';
@@ -8,8 +10,8 @@ const STUDIO_CMD = 'npx lintscope studio';
 
 /* ------------------------------------------------------------------ content */
 
-const ACTIVE_LINTERS = ['eslint', 'biome', 'oxc'] as const;
-const SOON_LINTERS = ['tsc', 'stylelint'] as const;
+const ACTIVE_LINTERS = ['eslint', 'biome', 'oxc', 'stylelint'] as const;
+const SOON_LINTERS = ['tsc'] as const;
 
 const STEPS: { icon: IconName; title: string; body: string }[] = [
   {
@@ -216,8 +218,8 @@ export default function HomePage() {
                   key={source}
                   className="inline-flex items-center gap-2.5 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-ink shadow-card"
                 >
-                  <LinterLogo source={source} size={18} />
-                  {source === 'oxc' ? 'OXC' : source === 'eslint' ? 'ESLint' : 'Biome'}
+                  <LinterLogo meta={deriveLinterMeta(source)} size={18} />
+                  {deriveLinterMeta(source).label}
                 </span>
               ))}
               {SOON_LINTERS.map((source) => (
@@ -225,8 +227,8 @@ export default function HomePage() {
                   key={source}
                   className="inline-flex items-center gap-2.5 rounded-full border border-dashed border-line px-4 py-2 text-sm text-ink-faint"
                 >
-                  <LinterLogo source={source} size={18} className="opacity-50" />
-                  {source === 'tsc' ? 'tsc' : 'Stylelint'}
+                  <LinterLogo meta={deriveLinterMeta(source)} size={18} className="opacity-50" />
+                  {deriveLinterMeta(source).label}
                   <span className="rounded bg-surface-3 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-ink-faint">
                     soon
                   </span>
@@ -330,7 +332,10 @@ export default function HomePage() {
                   className="pointer-events-none absolute -inset-6 rounded-3xl bg-accent/10 blur-3xl"
                 />
                 <div className="relative rounded-xl border border-line-strong bg-surface p-4 shadow-card sm:p-5">
-                  <DiagnosticCard diagnostic={sampleDiagnostic} />
+                  <DiagnosticCard
+                    diagnostic={sampleDiagnostic}
+                    meta={deriveLinterMeta(sampleDiagnostic.source)}
+                  />
                 </div>
               </div>
             </div>

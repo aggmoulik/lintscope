@@ -44,7 +44,12 @@ export function buildStylelintArgs(patterns: string[], configPath?: string): str
  */
 export const stylelintAdapter: LinterAdapter<StylelintResult[]> = {
   name: 'stylelint',
-  meta: { label: 'Stylelint', logoSlug: 'stylelint', docsUrl: 'https://stylelint.io' },
+  meta: {
+    label: 'Stylelint',
+    logoSlug: 'stylelint',
+    docsUrl: 'https://stylelint.io',
+    fixCommand: 'stylelint --fix',
+  },
   priority: 40,
   bin: 'stylelint',
   pkgName: 'stylelint',

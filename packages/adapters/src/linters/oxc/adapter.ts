@@ -13,7 +13,7 @@ import { mapOxcResults } from './mapper';
  */
 export const oxcAdapter: LinterAdapter<OxcReport> = {
   name: 'oxc',
-  meta: { label: 'OXC', logoSlug: 'oxc', docsUrl: 'https://oxc.rs' },
+  meta: { label: 'OXC', logoSlug: 'oxc', docsUrl: 'https://oxc.rs', fixCommand: 'oxlint --fix' },
   priority: 10,
   bin: 'oxlint',
   pkgName: 'oxlint',

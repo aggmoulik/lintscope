@@ -49,12 +49,8 @@ export {
 } from './components/file-tree-view';
 export { ICONS, Icon, type IconName, type IconProps } from './components/icon';
 export { LintDashboard, type LintDashboardProps } from './components/lint-dashboard';
-export {
-  LinterBadge,
-  type LinterBadgeProps,
-  type LinterBadgeTone,
-} from './components/linter-badge';
-export { LinterLogo, type LinterLogoProps, linterLabel } from './components/linter-logo';
+export { LinterBadge, type LinterBadgeProps } from './components/linter-badge';
+export { LinterLogo, type LinterLogoProps } from './components/linter-logo';
 export {
   RuleSummary,
   type RuleSummaryProps,
@@ -68,4 +64,10 @@ export {
   EMPTY_FILTERS,
   hasActiveFilters,
 } from './lib/filters';
+export {
+  deriveLinterMeta,
+  type LinterTone,
+  type ResolvedLinterMeta,
+  resolveLinterMeta,
+} from './lib/linter-meta';
 export { cn } from './lib/utils';

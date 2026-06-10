@@ -19,18 +19,20 @@ function makeDiagnostic(i: number): Diagnostic {
 
 describe('<DiagnosticList />', () => {
   it('renders the empty state when no diagnostics are supplied', () => {
-    render(<DiagnosticList diagnostics={[]} />);
+    render(<DiagnosticList diagnostics={[]} linterMeta={{}} />);
     expect(screen.getByText(/No diagnostics/)).toBeDefined();
   });
 
   it('renders a custom empty state when provided', () => {
-    render(<DiagnosticList diagnostics={[]} emptyState={<>All clear ✨</>} />);
+    render(<DiagnosticList diagnostics={[]} linterMeta={{}} emptyState={<>All clear ✨</>} />);
     expect(screen.getByText('All clear ✨')).toBeDefined();
   });
 
   it('renders a scrolling container with virtualized rows', () => {
     const diagnostics = Array.from({ length: 1000 }, (_, i) => makeDiagnostic(i));
-    render(<DiagnosticList diagnostics={diagnostics} height={400} estimateSize={100} />);
+    render(
+      <DiagnosticList diagnostics={diagnostics} linterMeta={{}} height={400} estimateSize={100} />,
+    );
     const scrollContainer = screen.getByTestId('diagnostic-list-scroll');
     expect(scrollContainer).toBeDefined();
     // Virtualization → not every diagnostic is in the DOM at once

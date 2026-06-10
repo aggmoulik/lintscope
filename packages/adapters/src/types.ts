@@ -8,7 +8,11 @@ export interface DetectedConfig {
   kind?: string;
 }
 
-/** Display/branding metadata that travels with the adapter into the UI. */
+/**
+ * Display/branding metadata that travels with the adapter into the UI. The
+ * runner stamps it onto the report's `linters[]` entries, so the dashboard
+ * needs zero per-linter knowledge.
+ */
 export interface AdapterMeta {
   /** Brand-cased display name, e.g. 'ESLint', 'Biome', 'OXC'. */
   label: string;
@@ -16,6 +20,8 @@ export interface AdapterMeta {
   logoSlug?: string;
   /** Linter homepage / docs, linked from the UI. */
   docsUrl?: string;
+  /** CLI autofix invocation, e.g. 'eslint --fix'. Omit when the linter has no autofix. */
+  fixCommand?: string;
 }
 
 /** Everything the runner learned before calling `map()`. */

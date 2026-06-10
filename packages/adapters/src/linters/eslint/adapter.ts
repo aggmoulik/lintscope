@@ -27,7 +27,12 @@ export function buildEslintArgs(patterns: string[], configPath?: string): string
  */
 export const eslintAdapter: LinterAdapter<EslintLintResult[]> = {
   name: 'eslint',
-  meta: { label: 'ESLint', logoSlug: 'eslint', docsUrl: 'https://eslint.org' },
+  meta: {
+    label: 'ESLint',
+    logoSlug: 'eslint',
+    docsUrl: 'https://eslint.org',
+    fixCommand: 'eslint --fix',
+  },
   priority: 30,
   bin: 'eslint',
   pkgName: 'eslint',

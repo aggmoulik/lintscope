@@ -3,11 +3,18 @@
 import type { Diagnostic } from '@lintscope/schema';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
+import { deriveLinterMeta, type ResolvedLinterMeta } from '../lib/linter-meta';
 import { cn } from '../lib/utils';
 import { DiagnosticCard } from './diagnostic-card';
 
 export interface DiagnosticListProps {
   diagnostics: Diagnostic[];
+  /**
+   * Resolved display meta per linter source — from `resolveLinterMeta(report)`.
+   * Required: cards never resolve branding themselves. Sources missing from
+   * the map fall back to `deriveLinterMeta` (complete, derived defaults).
+   */
+  linterMeta: Record<string, ResolvedLinterMeta>;
   className?: string;
   /** Approximate row height in px. Defaults to 112 (card height + gap). */
   estimateSize?: number;
@@ -21,6 +28,7 @@ export interface DiagnosticListProps {
 
 export function DiagnosticList({
   diagnostics,
+  linterMeta,
   className,
   estimateSize = 112,
   height = 600,
@@ -85,6 +93,7 @@ export function DiagnosticList({
             >
               <DiagnosticCard
                 diagnostic={diagnostic}
+                meta={linterMeta[diagnostic.source] ?? deriveLinterMeta(diagnostic.source)}
                 onClick={onSelect}
                 {...(onFetchSource ? { onFetchSource } : {})}
               />

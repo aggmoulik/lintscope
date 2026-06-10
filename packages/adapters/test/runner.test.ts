@@ -140,6 +140,19 @@ describe('runAdapter', () => {
     expect(seen).toEqual([['line1', 'line2']]);
   });
 
+  it('stamps the adapter display meta onto the matching report linter entry', async () => {
+    const { spawn } = fakeSpawn({ stdout: '[]', exitCode: 0 });
+    const adapter = makeAdapter({
+      meta: { label: 'FakeLint', logoSlug: 'fake', fixCommand: 'fakelint --fix' },
+    });
+    const result = await runAdapter(adapter, { cwd: ROOT }, { spawn });
+    expect(result.linters[0]?.meta).toEqual({
+      label: 'FakeLint',
+      logoSlug: 'fake',
+      fixCommand: 'fakelint --fix',
+    });
+  });
+
   it('reports the version resolved from the project install in the run context', async () => {
     const { spawn } = fakeSpawn({ stdout: '[]', exitCode: 0 });
     const result = await runAdapter(

@@ -2,12 +2,13 @@
 
 import type { Diagnostic, LintReport } from '@lintscope/schema';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { deriveLinterMeta, type ResolvedLinterMeta, resolveLinterMeta } from '../lib/linter-meta';
 import { cn } from '../lib/utils';
 import { CommandPalette, type CommandPaletteAction } from './command-palette';
 import { DiagnosticCard } from './diagnostic-card';
 import { FileTree } from './file-tree';
 import { Icon, type IconName } from './icon';
-import { LinterLogo, linterLabel } from './linter-logo';
+import { LinterLogo } from './linter-logo';
 import { SeverityBadge } from './severity-badge';
 
 type GroupBy = 'file' | 'rule' | 'severity';
@@ -50,6 +51,10 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState<GroupBy>('file');
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Resolve ALL per-linter display meta once, at the boundary — components
+  // below this point take complete meta as required props, never optionals.
+  const linterMeta = useMemo(() => resolveLinterMeta(report), [report]);
 
   const counts = useMemo(() => {
     let errors = 0;
@@ -151,6 +156,7 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
       >
         <Sidebar
           report={report}
+          linterMeta={linterMeta}
           counts={counts}
           query={query}
           setQuery={setQuery}
@@ -161,6 +167,7 @@ export function LintDashboard({ report, className, onFetchSource }: LintDashboar
         />
 
         <Feed
+          linterMeta={linterMeta}
           filteredCount={filtered.length}
           total={report.diagnostics.length}
           selectedPath={selectedPath}
@@ -267,6 +274,7 @@ type Counts = {
 
 function Sidebar({
   report,
+  linterMeta,
   counts,
   query,
   setQuery,
@@ -276,6 +284,7 @@ function Sidebar({
   setSelectedPath,
 }: {
   report: LintReport;
+  linterMeta: Record<string, ResolvedLinterMeta>;
   counts: Counts;
   query: string;
   setQuery: (v: string) => void;
@@ -332,8 +341,8 @@ function Sidebar({
                       : 'border-line bg-surface text-ink-muted hover:text-ink',
                   )}
                 >
-                  <LinterLogo source={l.name} size={14} />
-                  {linterLabel(l.name)}
+                  <LinterLogo meta={linterMeta[l.name] ?? deriveLinterMeta(l.name)} size={14} />
+                  {(linterMeta[l.name] ?? deriveLinterMeta(l.name)).label}
                   <span className="rounded-full bg-surface-3 px-1.5 py-px text-[11px] text-ink-faint">
                     {counts.byLinter[l.name] ?? 0}
                   </span>
@@ -372,6 +381,7 @@ function Sidebar({
 /* ----------------------------------- feed --------------------------------- */
 
 function Feed({
+  linterMeta,
   filteredCount,
   total,
   selectedPath,
@@ -383,6 +393,7 @@ function Feed({
   onReset,
   onFetchSource,
 }: {
+  linterMeta: Record<string, ResolvedLinterMeta>;
   filteredCount: number;
   total: number;
   selectedPath: string | null;
@@ -466,6 +477,7 @@ function Feed({
                   <DiagnosticCard
                     key={d.id}
                     diagnostic={d}
+                    meta={linterMeta[d.source] ?? deriveLinterMeta(d.source)}
                     {...(onFetchSource ? { onFetchSource } : {})}
                   />
                 ))}

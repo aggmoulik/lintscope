@@ -37,6 +37,44 @@ describe('LintReportSchema', () => {
     expect(() => LintReportSchema.parse(makeReport({ linters: [] }))).toThrow();
   });
 
+  it('accepts a linter entry with display meta (additive 1.x field)', () => {
+    const report = makeReport({
+      linters: [
+        {
+          name: 'stylelint',
+          version: '16.26.1',
+          meta: {
+            label: 'Stylelint',
+            logoSlug: 'stylelint',
+            docsUrl: 'https://stylelint.io',
+            fixCommand: 'stylelint --fix',
+          },
+        },
+      ],
+    });
+    const parsed = LintReportSchema.parse(report);
+    expect(parsed.linters[0]?.meta?.label).toBe('Stylelint');
+    expect(parsed.linters[0]?.meta?.fixCommand).toBe('stylelint --fix');
+  });
+
+  it('accepts meta with only the required label (all other fields optional)', () => {
+    const report = makeReport({
+      linters: [{ name: 'hypothetlint', version: '1.0.0', meta: { label: 'Hypothetlint' } }],
+    });
+    expect(() => LintReportSchema.parse(report)).not.toThrow();
+  });
+
+  it('still accepts linter entries WITHOUT meta (pre-meta reports)', () => {
+    expect(() => LintReportSchema.parse(makeReport())).not.toThrow();
+  });
+
+  it('rejects meta with an empty label', () => {
+    const report = makeReport({
+      linters: [{ name: 'x', version: '1.0.0', meta: { label: '' } }],
+    });
+    expect(() => LintReportSchema.parse(report)).toThrow();
+  });
+
   it('rejects negative counts in summary', () => {
     expect(() =>
       LintReportSchema.parse(

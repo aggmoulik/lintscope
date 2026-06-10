@@ -3,16 +3,23 @@
 import type { Diagnostic } from '@lintscope/schema';
 import { useEffect, useState } from 'react';
 import { applyEslintFix } from '../lib/apply-fix';
+import type { ResolvedLinterMeta } from '../lib/linter-meta';
 import { cn } from '../lib/utils';
 import { AutofixHint } from './autofix-hint';
 import { CodePreview } from './code-preview';
 import { DiffViewer } from './diff-viewer';
 import { Icon } from './icon';
-import { LinterLogo, linterLabel } from './linter-logo';
+import { LinterLogo } from './linter-logo';
 import { SeverityBadge } from './severity-badge';
 
 export interface DiagnosticCardProps {
   diagnostic: Diagnostic;
+  /**
+   * Resolved display meta for this diagnostic's linter — from
+   * `resolveLinterMeta(report)[diagnostic.source]` or `deriveLinterMeta(source)`.
+   * Required: all per-linter branding/behavior flows through it.
+   */
+  meta: ResolvedLinterMeta;
   className?: string;
   onClick?: (diagnostic: Diagnostic) => void;
   /** When provided, renders a "Dismiss" action that hides the card from view. */
@@ -33,23 +40,23 @@ type PreviewState =
 
 export function DiagnosticCard({
   diagnostic,
+  meta,
   className,
   onClick,
   onDismiss,
   onFetchSource,
 }: DiagnosticCardProps) {
   const hasFix = Boolean(diagnostic.fix);
-  // Auto-fixable ONLY when the linter actually reports it: ESLint ships inline
-  // `fix` data, Biome sets a `fixable` tag. oxlint's JSON exposes neither, so we
-  // never claim oxc diagnostics are fixable (would be a guess).
+  // Auto-fixable ONLY when the linter actually reports it: inline `fix` data
+  // (range + replacement text) or an explicit `fixable` flag. Never guessed.
   const fixable = hasFix || diagnostic.fixable === true;
   const canPreview = Boolean(onFetchSource);
-  const previewIsAutofix = hasFix && diagnostic.source === 'eslint';
-  // Show the CLI fix command only when the diagnostic IS fixable but we can't
-  // render the green/red inline diff (i.e. not an ESLint inline fix) — e.g. a
-  // fixable Biome rule. Never on oxc (we don't know it's fixable).
-  const showFixCommand =
-    fixable && !previewIsAutofix && (diagnostic.source === 'biome' || diagnostic.source === 'oxc');
+  // Inline diff preview whenever the diagnostic carries fix data — the
+  // range/text shape is linter-agnostic, no source check needed.
+  const previewIsAutofix = hasFix;
+  // Otherwise, when the diagnostic is fixable and its linter declares a CLI
+  // autofix command (via adapter meta), hand the user that command.
+  const showFixCommand = fixable && !hasFix && meta.fixCommand !== null;
   const fileName = diagnostic.relativePath.split('/').pop() ?? diagnostic.relativePath;
 
   const [preview, setPreview] = useState<PreviewState>({ kind: 'idle' });
@@ -133,8 +140,8 @@ export function DiagnosticCard({
           <span className="font-mono text-[13px] text-ink-faint italic">parser-error</span>
         )}
         <span className="inline-flex items-center gap-1.5 text-[12px] text-ink-faint">
-          <LinterLogo source={diagnostic.source} size={14} />
-          {linterLabel(diagnostic.source)}
+          <LinterLogo meta={meta} size={14} />
+          {meta.label}
         </span>
         <div className="flex-1" />
         {fixable && (
@@ -208,7 +215,7 @@ export function DiagnosticCard({
           </span>
         </span>
         <div className="flex-1" />
-        {showFixCommand && <AutofixHint source={diagnostic.source as 'biome' | 'oxc'} />}
+        {showFixCommand && meta.fixCommand !== null && <AutofixHint command={meta.fixCommand} />}
         {onDismiss && (
           <button
             type="button"

@@ -1,10 +1,8 @@
-import { defineConfig } from 'tsup';
+import { defineConfig, type Options } from 'tsup';
 
-export default defineConfig({
-  entry: ['src/index.ts'],
+const SHARED: Options = {
   format: ['esm'],
   dts: true,
-  clean: true,
   sourcemap: true,
   target: 'es2022',
   external: [
@@ -18,10 +16,25 @@ export default defineConfig({
     'diff',
     'parse-diff',
   ],
-  // Tsup bundles all per-file `'use client'` directives away. The barrel
-  // re-exports a mix of client + server components; mark the whole bundle
-  // as client so Next's RSC compiler accepts the import. Source files keep
-  // their per-file directives, so shadcn-copied components still carry the
-  // right directive on a per-file basis in consumer projects.
-  banner: { js: '"use client";' },
-});
+};
+
+export default defineConfig([
+  {
+    ...SHARED,
+    entry: ['src/index.ts'],
+    clean: true,
+    // Tsup bundles all per-file `'use client'` directives away. The barrel
+    // re-exports a mix of client + server components; mark the whole bundle
+    // as client so Next's RSC compiler accepts the import. Source files keep
+    // their per-file directives, so shadcn-copied components still carry the
+    // right directive on a per-file basis in consumer projects.
+    banner: { js: '"use client";' },
+  },
+  {
+    ...SHARED,
+    entry: { meta: 'src/lib/linter-meta.ts' },
+    clean: false,
+    // NO client banner: linter-meta is pure data resolution, importable from
+    // Server Components via the `@lintscope/ui/meta` subpath.
+  },
+]);

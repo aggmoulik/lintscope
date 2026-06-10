@@ -135,10 +135,19 @@ export async function runAdapter<Payload>(
 
   const version = adapter.pkgName ? resolveVersion(options.cwd, adapter.pkgName) : 'unknown';
 
-  return adapter.map(payload, {
+  const report = adapter.map(payload, {
     cwd: options.cwd,
     binaryPath: binary,
     version,
     ...(options.configPath ? { configPath: options.configPath } : {}),
   });
+
+  // Stamp the adapter's display meta onto its linter entry — mappers stay
+  // presentation-free, and the UI gets branding without per-linter knowledge.
+  return {
+    ...report,
+    linters: report.linters.map((entry) =>
+      entry.name === adapter.name ? { ...entry, meta: adapter.meta } : entry,
+    ),
+  };
 }

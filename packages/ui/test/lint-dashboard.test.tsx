@@ -189,3 +189,48 @@ describe('<LintDashboard /> multi-linter', () => {
     expect(screen.getByTestId('diagnostic-feed').textContent).toContain('2 of 3 shown');
   });
 });
+
+describe('<LintDashboard /> linter-agnostic meta', () => {
+  // A linter this codebase has NEVER heard of, described entirely by the
+  // report-borne meta the adapter runner stamps. If this test breaks, the UI
+  // has grown per-linter knowledge again.
+  const FICTIONAL_REPORT: LintReport = {
+    ...REPORT,
+    linters: [
+      { name: 'eslint', version: '9.15.0' },
+      {
+        name: 'hypothetlint',
+        version: '0.1.0',
+        meta: { label: 'HypothetLint', fixCommand: 'hypothetlint --repair' },
+      },
+    ],
+    diagnostics: [
+      makeDiagnostic({ id: 'h1', source: 'eslint', relativePath: 'src/a.ts' }),
+      makeDiagnostic({
+        id: 'h2',
+        source: 'hypothetlint',
+        ruleId: 'hypo/rule',
+        relativePath: 'src/b.ts',
+        fixable: true,
+      }),
+    ],
+  };
+
+  it('renders the fictional linter with its report-borne label in the filter row', () => {
+    render(<LintDashboard report={FICTIONAL_REPORT} />);
+    const row = screen.getByTestId('linter-filter');
+    expect(within(row).getAllByText('HypothetLint').length).toBeGreaterThan(0);
+  });
+
+  it('labels the fictional linter on its diagnostic cards via meta', () => {
+    render(<LintDashboard report={FICTIONAL_REPORT} />);
+    const feed = screen.getByTestId('diagnostic-feed');
+    expect(feed.textContent).toContain('HypothetLint');
+  });
+
+  it('shows the fictional linter fix command from meta on fixable diagnostics', () => {
+    render(<LintDashboard report={FICTIONAL_REPORT} />);
+    const hints = screen.getAllByTestId('autofix-hint');
+    expect(hints.some((h) => h.textContent?.includes('hypothetlint --repair'))).toBe(true);
+  });
+});

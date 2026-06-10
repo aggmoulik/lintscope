@@ -1,49 +1,40 @@
 'use client';
 
 import { useState } from 'react';
+import type { LinterTone, ResolvedLinterMeta } from '../lib/linter-meta';
 import { cn } from '../lib/utils';
 
-/**
- * Per-linter display metadata: the brand-cased name (as the authors write it)
- * + the logo slug served by logos.lndev.me, with a tinted-square fallback color.
- */
-const LINTER_META: Record<string, { label: string; slug?: string; color: string }> = {
-  eslint: { label: 'ESLint', slug: 'eslint', color: 'bg-violet' },
-  biome: { label: 'Biome', slug: 'biome', color: 'bg-ok' },
-  oxc: { label: 'OXC', slug: 'oxc', color: 'bg-accent' },
-  tsc: { label: 'tsc', slug: 'typescript', color: 'bg-violet' },
-  stylelint: { label: 'Stylelint', slug: 'stylelint', color: 'bg-ok' },
+const TONE_BG: Record<LinterTone, string> = {
+  violet: 'bg-violet',
+  ok: 'bg-ok',
+  accent: 'bg-accent',
+  neutral: 'bg-ink-faint',
 };
 
-/** Brand-cased linter name (falls back to the raw source). */
-export function linterLabel(source: string): string {
-  return LINTER_META[source]?.label ?? source;
-}
-
 export interface LinterLogoProps {
-  source: string;
+  /** Resolved display meta — from `resolveLinterMeta(report)[source]` or `deriveLinterMeta(source)`. */
+  meta: ResolvedLinterMeta;
   size?: number;
   className?: string;
 }
 
 /**
  * The linter's brand logo, loaded from logos.lndev.me. Falls back to a tinted
- * square (the linter's hue) for unknown sources or if the logo fails to load.
+ * square (the linter's tone) when there's no logo slug or the load fails.
  *
  * NOTE: this is the studio's one intentional third-party request — a static
  * brand logo (no code or diagnostics ever leave the machine). Self-host the
  * SVGs if you need a zero-egress build.
  */
-export function LinterLogo({ source, size = 14, className }: LinterLogoProps) {
-  const meta = LINTER_META[source];
+export function LinterLogo({ meta, size = 14, className }: LinterLogoProps) {
   const [failed, setFailed] = useState(false);
 
-  if (meta?.slug && !failed) {
+  if (meta.logoSlug && !failed) {
     return (
       <img
-        src={`https://logos.lndev.me/logos/${meta.slug}.svg`}
+        src={`https://logos.lndev.me/logos/${meta.logoSlug}.svg`}
         alt=""
-        aria-hidden
+        aria-hidden="true"
         loading="lazy"
         onError={() => setFailed(true)}
         className={cn('shrink-0 rounded-[2px] object-contain', className)}
@@ -54,8 +45,8 @@ export function LinterLogo({ source, size = 14, className }: LinterLogoProps) {
 
   return (
     <span
-      aria-hidden
-      className={cn('shrink-0 rounded-[2px]', meta?.color ?? 'bg-ink-faint', className)}
+      aria-hidden="true"
+      className={cn('shrink-0 rounded-[2px]', TONE_BG[meta.tone], className)}
       style={{ width: size, height: size }}
     />
   );

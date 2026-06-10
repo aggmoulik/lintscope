@@ -1,14 +1,12 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
+import type { ResolvedLinterMeta } from '../lib/linter-meta';
 import { cn } from '../lib/utils';
 
 /**
  * Compact pill identifying which linter produced a diagnostic. Sized to sit
- * alongside `<SeverityBadge />` in cards and toolbars. Visually distinct per
- * source so the eye can scan a mixed-linter report quickly.
- *
- * Accepts any string in `source` (matches the `Diagnostic.source` field which
- * is an open union for forward compat). Unknown sources get the neutral
- * `_unknown` variant.
+ * alongside `<SeverityBadge />` in cards and toolbars. Color comes from the
+ * resolved meta tone, so any linter — including ones this package has never
+ * heard of — renders distinctly with zero per-linter code here.
  */
 
 const badgeStyles = cva(
@@ -16,44 +14,34 @@ const badgeStyles = cva(
   {
     variants: {
       tone: {
-        eslint: 'bg-violet/12 text-violet',
-        biome: 'bg-ok-bg text-ok',
-        oxc: 'bg-accent-soft text-accent',
-        tsc: 'bg-violet/12 text-violet',
-        stylelint: 'bg-ok-bg text-ok',
-        _unknown: 'bg-surface-3 text-ink-muted',
+        violet: 'bg-violet/12 text-violet',
+        ok: 'bg-ok-bg text-ok',
+        accent: 'bg-accent-soft text-accent',
+        neutral: 'bg-surface-3 text-ink-muted',
       },
     },
-    defaultVariants: { tone: '_unknown' },
+    defaultVariants: { tone: 'neutral' },
   },
 );
-
-const KNOWN_SOURCES = ['eslint', 'biome', 'oxc', 'tsc', 'stylelint'] as const;
-type KnownSource = (typeof KNOWN_SOURCES)[number];
-
-function isKnownSource(value: string): value is KnownSource {
-  return (KNOWN_SOURCES as readonly string[]).includes(value);
-}
-
-export type LinterBadgeTone = NonNullable<VariantProps<typeof badgeStyles>['tone']>;
 
 export interface LinterBadgeProps {
   /** Linter source. Open string matching `Diagnostic.source`. */
   source: string;
+  /** Resolved display meta — from `resolveLinterMeta(report)[source]` or `deriveLinterMeta(source)`. */
+  meta: ResolvedLinterMeta;
   className?: string;
-  /** Override the rendered label. Defaults to `source` uppercased. */
+  /** Override the rendered label. Defaults to the meta label. */
   children?: React.ReactNode;
 }
 
-export function LinterBadge({ source, className, children }: LinterBadgeProps) {
-  const tone: LinterBadgeTone = isKnownSource(source) ? source : '_unknown';
+export function LinterBadge({ source, meta, className, children }: LinterBadgeProps) {
   return (
     <span
-      className={cn(badgeStyles({ tone }), className)}
+      className={cn(badgeStyles({ tone: meta.tone }), className)}
       data-linter={source}
       title={`Source: ${source}`}
     >
-      {children ?? source}
+      {children ?? meta.label}
     </span>
   );
 }

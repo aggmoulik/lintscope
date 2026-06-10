@@ -16,6 +16,8 @@ export {
   FileInfoSchema,
   type LinterInfo,
   LinterInfoSchema,
+  type LinterMeta,
+  LinterMetaSchema,
   type LintReport,
   LintReportSchema,
   type ReportSummary,
